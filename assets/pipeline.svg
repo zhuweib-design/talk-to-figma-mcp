@@ -1,74 +1,223 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="392" viewBox="0 0 960 392" role="img" aria-label="管线示意图：浏览器抽取页面树落盘，脚本经 MCP 服务与中继把画板建进 Figma">
-  <style>
-    text { font-family: system-ui, "Microsoft YaHei", sans-serif; fill: #1f2328; }
-    .box { fill: #ffffff; stroke: #8c959f; stroke-width: 1.5; rx: 8; }
-    .svc { fill: #f2f7ff; stroke: #2f6feb; }
-    .art { fill: #f6fbf4; stroke: #3f9b4a; }
-    .t { font-size: 15px; font-weight: 600; }
-    .s { font-size: 12.5px; fill: #57606a; }
-    .lbl { font-size: 12.5px; fill: #2f6feb; }
-    .cap { font-size: 13px; fill: #57606a; }
-    line, path { stroke: #8c959f; stroke-width: 1.6; fill: none; }
-    .dash { stroke-dasharray: 5 4; }
-  </style>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 362" role="img" lang="zh-CN" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="showcase" data-node-ui="" data-reader-fit="intrinsic-height" data-reader-min-text="7.5" data-reader-primary-text="14" width="1210" height="362" font-family="JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Consolas, DejaVu Sans Mono, Liberation Mono, Noto Sans Mono CJK SC, PingFang SC, Hiragino Sans GB, Microsoft YaHei, monospace" background-color="#0f172a">
+        <rect x="0" y="0" width="1210" height="362" fill="#0f172a" /><title id="archify-diagram-title">Figma 原型转稿管线</title>
+        <desc id="archify-diagram-description">由 Archify 生成的架构图。</desc>
+        
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-default" fill="#94a3b8" stroke="none" />
+          </marker>
+          <marker id="arrowhead-emphasis" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-emphasis" fill="#34d399" stroke="none" />
+          </marker>
+          <marker id="arrowhead-security" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-security" fill="#fb7185" stroke="none" />
+          </marker>
+          <marker id="arrowhead-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" class="m-dashed" fill="#a78bfa" stroke="none" />
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" class="c-grid" stroke-width="0.5" fill="none" stroke="#1e293b" />
+          </pattern>
+        </defs>
+        
 
-  <text x="40" y="34" class="t">① 抽取：在浏览器里把原型页变成页面树</text>
+        
+        <rect width="100%" height="100%" fill="url(#grid)" />
 
-  <rect x="40" y="52" width="190" height="62" class="box" rx="8" />
-  <text x="58" y="78" class="t">HTML 原型页</text>
-  <text x="58" y="98" class="s">浏览器控制台注入脚本</text>
+        
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="本机服务" x="250" y="30" width="690" height="264" rx="12" class="c-region" stroke-width="1" fill="rgba(251,191,36,0.03)" stroke="#877640" />
 
-  <rect x="300" y="52" width="230" height="62" class="box svc" rx="8" />
-  <text x="318" y="78" class="t">收集服务 :8766</text>
-  <text x="318" y="98" class="s">collect-server.ts（绑 127.0.0.1）</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Figma 桌面端" x="10" y="180" width="210" height="114" rx="12" class="c-region" stroke-width="1" fill="rgba(251,191,36,0.03)" stroke="#877640" />
 
-  <rect x="600" y="52" width="230" height="62" class="box art" rx="8" />
-  <text x="618" y="78" class="t">pages/&lt;页面&gt;.json</text>
-  <text x="618" y="98" class="s">页面树，一行一个页面</text>
+        
+        <g data-graph-role="automatic-crossover" style="--step:0">
+          <path data-graph-role="automatic-crossover-underlay" d="M 190 92 L 280 92" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="browser" data-edge-to="collect" data-edge-label="拉取脚本" data-edge-key="0" data-edge-id="pull-script" data-composition-points="190,92;280,92" data-composition-crossover="halo" data-composition-independent="true" d="M 190 92 L 280 92" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:1">
+          <path data-graph-role="automatic-crossover-underlay" d="M 430 92 L 520 92" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="collect" data-edge-to="pages" data-edge-label="回传落盘" data-edge-key="1" data-edge-id="write-tree" data-composition-points="430,92;520,92" data-composition-crossover="halo" data-composition-independent="true" d="M 430 92 L 520 92" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:2">
+          <path data-graph-role="automatic-crossover-underlay" d="M 670 92 L 760 92" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="pages" data-edge-to="scripts" data-edge-label="读页面树" data-edge-key="2" data-edge-id="read-tree" data-composition-points="670,92;760,92" data-composition-crossover="halo" data-composition-independent="true" d="M 670 92 L 760 92" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:3">
+          <path data-graph-role="automatic-crossover-underlay" d="M 835 124 L 835 210" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="scripts" data-edge-to="mcp" data-edge-label="调用" data-edge-key="3" data-edge-id="call-tools" data-composition-points="835,124;835,210" data-composition-crossover="halo" data-composition-independent="true" d="M 835 124 L 835 210" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:4">
+          <path data-graph-role="automatic-crossover-underlay" d="M 760 242 L 650 242" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="mcp" data-edge-to="relay" data-edge-label="WebSocket" data-edge-key="4" data-edge-id="ws-down" data-composition-points="760,242;650,242" data-composition-crossover="halo" data-composition-independent="true" d="M 760 242 L 650 242" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:5">
+          <path data-graph-role="automatic-crossover-underlay" d="M 500 242 L 190 242" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="relay" data-edge-to="plugin" data-edge-label="同频道广播" data-edge-key="5" data-edge-id="same-channel" data-composition-points="500,242;190,242" data-composition-crossover="halo" data-composition-independent="true" d="M 500 242 L 190 242" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
+        <g data-graph-role="automatic-crossover" style="--step:6">
+          <path data-graph-role="automatic-crossover-underlay" d="M 1020 242 L 910 242" fill="none" stroke="var(--mask)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />
+          <path data-edge-from="ai" data-edge-to="mcp" data-edge-label="stdio" data-edge-key="6" data-edge-id="stdio" data-composition-points="1020,242;910,242" data-composition-crossover="halo" data-composition-independent="true" d="M 1020 242 L 910 242" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke="#94a3b8" />
+        </g>
 
-  <path d="M230 83 H296" marker-end="url(#a)" />
-  <text x="216" y="130" class="lbl">注入 extractor.js / batch-extract.js</text>
-  <path d="M530 83 H596" marker-end="url(#a)" />
-  <text x="536" y="130" class="lbl">回传落盘</text>
+        
+        <g id="node-browser" data-node-id="browser" data-node-label="浏览器" tabindex="0" role="button" aria-label="聚焦浏览器，原型页 + 控制台, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="原型页 + 控制台" data-node-context="架构组件">
+          <title>浏览器 · 原型页 + 控制台 · 架构组件</title>
+          <rect x="40" y="60" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="40" y="60" width="150" height="64" rx="8" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5" fill="#20293c" stroke="#6f7c90" />
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-external" transform="translate(46 66) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#94a3b8">
+            <rect x="2" y="3" width="12" height="10" rx="2" />
+            <path d="M2 6.5h12" />
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill" stroke="none" />
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill" stroke="none" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="115" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">浏览器</text>
+        <text data-detail="context" x="115" y="106" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">原型页 + 控制台</text>
+        </g>
 
-  <text x="40" y="168" class="t">② 推送与核对：脚本经中继把画板建进 Figma</text>
+        <g id="node-collect" data-node-id="collect" data-node-label="收集服务" tabindex="0" role="button" aria-label="聚焦收集服务，:8766, 本机服务" aria-pressed="false" data-node-kind="backend" data-node-sublabel=":8766" data-node-tag="绑 127.0.0.1" data-node-context="本机服务">
+          <title>收集服务 · :8766 · 本机服务 · 绑 127.0.0.1</title>
+          <rect x="280" y="60" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="280" y="60" width="150" height="64" rx="8" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5" fill="#142f39" stroke="#2a9e7a" />
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(286 66) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#34d399">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="355" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">收集服务</text>
+        <text data-detail="context" x="355" y="106" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">:8766</text>
+        <text data-detail="fine" x="355" y="116" class="t-backend" font-size="7" text-anchor="middle" fill="#34d399" opacity="0">绑 127.0.0.1</text>
+        </g>
 
-  <rect x="40" y="186" width="150" height="62" class="box" rx="8" />
-  <text x="58" y="212" class="t">AI 客户端</text>
-  <text x="58" y="232" class="s">Cursor / Claude 等</text>
+        <g id="node-pages" data-node-id="pages" data-node-label="页面树" tabindex="0" role="button" aria-label="聚焦页面树，pages/*.json, 本机服务" aria-pressed="false" data-node-kind="database" data-node-sublabel="pages/*.json" data-node-context="本机服务">
+          <title>页面树 · pages/*.json · 本机服务</title>
+          <rect x="520" y="60" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="520" y="60" width="150" height="64" rx="8" class="c-database" data-animate="node" style="--step:2" stroke-width="1.5" fill="#232645" stroke="#7c6abf" />
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(526 66) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#a78bfa">
+            <ellipse cx="8" cy="4" rx="5" ry="2" />
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="595" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">页面树</text>
+        <text data-detail="context" x="595" y="106" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">pages/*.json</text>
+        </g>
 
-  <rect x="240" y="186" width="150" height="62" class="box svc" rx="8" />
-  <text x="258" y="212" class="t">MCP 服务</text>
-  <text x="258" y="232" class="s">63 条工具</text>
+        <g id="node-scripts" data-node-id="scripts" data-node-label="推送脚本" tabindex="0" role="button" aria-label="聚焦推送脚本，build-page.ts, 本机服务" aria-pressed="false" data-node-kind="backend" data-node-sublabel="build-page.ts" data-node-tag="check-pushed 对账" data-node-context="本机服务">
+          <title>推送脚本 · build-page.ts · 本机服务 · check-pushed 对账</title>
+          <rect x="760" y="60" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="760" y="60" width="150" height="64" rx="8" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5" fill="#142f39" stroke="#2a9e7a" />
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 66) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#34d399">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="835" y="90" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">推送脚本</text>
+        <text data-detail="context" x="835" y="106" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">build-page.ts</text>
+        <text data-detail="fine" x="835" y="116" class="t-backend" font-size="7" text-anchor="middle" fill="#34d399" opacity="0">check-pushed 对账</text>
+        </g>
 
-  <rect x="440" y="186" width="220" height="62" class="box svc" rx="8" />
-  <text x="458" y="212" class="t">中继 :3055</text>
-  <text x="458" y="232" class="s">socket.ts ＋ 控制台页</text>
+        <g id="node-plugin" data-node-id="plugin" data-node-label="Figma 插件" tabindex="0" role="button" aria-label="聚焦Figma 插件，BUILD 0.4.0, Figma 桌面端" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="BUILD 0.4.0" data-node-context="Figma 桌面端">
+          <title>Figma 插件 · BUILD 0.4.0 · Figma 桌面端</title>
+          <rect x="40" y="210" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="40" y="210" width="150" height="64" rx="8" class="c-frontend" data-animate="node" style="--step:6" stroke-width="1.5" fill="#122f43" stroke="#1d9eb7" />
+          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(46 216) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#22d3ee">
+            <rect x="2" y="3" width="12" height="10" rx="2" />
+            <path d="M2 6.5h12" />
+            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill" stroke="none" />
+            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill" stroke="none" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="115" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">Figma 插件</text>
+        <text data-detail="context" x="115" y="256" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">BUILD 0.4.0</text>
+        </g>
 
-  <rect x="710" y="186" width="180" height="62" class="box art" rx="8" />
-  <text x="728" y="212" class="t">Figma 插件</text>
-  <text x="728" y="232" class="s">开发版 link，画布落地</text>
+        <g id="node-relay" data-node-id="relay" data-node-label="中继" tabindex="0" role="button" aria-label="聚焦中继，:3055, 本机服务" aria-pressed="false" data-node-kind="backend" data-node-sublabel=":3055" data-node-tag="控制台页" data-node-context="本机服务">
+          <title>中继 · :3055 · 本机服务 · 控制台页</title>
+          <rect x="500" y="210" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="500" y="210" width="150" height="64" rx="8" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5" fill="#142f39" stroke="#2a9e7a" />
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(506 216) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#34d399">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="575" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">中继</text>
+        <text data-detail="context" x="575" y="256" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">:3055</text>
+        <text data-detail="fine" x="575" y="266" class="t-backend" font-size="7" text-anchor="middle" fill="#34d399" opacity="0">控制台页</text>
+        </g>
 
-  <path d="M190 217 H236" marker-end="url(#a)" />
-  <text x="196" y="266" class="lbl">stdio</text>
-  <path d="M390 217 H436" marker-end="url(#a)" />
-  <text x="392" y="266" class="lbl">WebSocket</text>
-  <path d="M660 217 H706" marker-end="url(#a)" />
-  <text x="650" y="266" class="lbl">同频道广播</text>
+        <g id="node-mcp" data-node-id="mcp" data-node-label="MCP 服务" tabindex="0" role="button" aria-label="聚焦MCP 服务，stdio · 63 工具, 本机服务" aria-pressed="false" data-node-kind="backend" data-node-sublabel="stdio · 63 工具" data-node-context="本机服务">
+          <title>MCP 服务 · stdio · 63 工具 · 本机服务</title>
+          <rect x="760" y="210" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="760" y="210" width="150" height="64" rx="8" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5" fill="#142f39" stroke="#2a9e7a" />
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 216) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#34d399">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="835" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">MCP 服务</text>
+        <text data-detail="context" x="835" y="256" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">stdio · 63 工具</text>
+        </g>
 
-  <path d="M715 114 V150 H470 V182" class="dash" marker-end="url(#a)" />
-  <text x="478" y="144" class="lbl">build-page.ts / build-batch.ts 读页面树，经 MCP 与中继建画板</text>
-  <path d="M830 114 V150 H600 V182" class="dash" marker-end="url(#a)" />
-  <text x="608" y="170" class="lbl">check-pushed.ts 对账：缺页、旧页、同名重复</text>
+        <g id="node-ai" data-node-id="ai" data-node-label="AI 客户端" tabindex="0" role="button" aria-label="聚焦AI 客户端，Cursor / Claude, 架构组件" aria-pressed="false" data-node-kind="external" data-node-sublabel="Cursor / Claude" data-node-context="架构组件">
+          <title>AI 客户端 · Cursor / Claude · 架构组件</title>
+          <rect x="1020" y="210" width="150" height="64" rx="8" class="c-mask" fill="#0f172a" stroke="none" />
+          <rect x="1020" y="210" width="150" height="64" rx="8" class="c-external" data-animate="node" style="--step:6" stroke-width="1.5" fill="#20293c" stroke="#6f7c90" />
+          <g aria-hidden="true" data-semantic-sigil="person" class="semantic-sigil s-external" transform="translate(1026 216) scale(0.6875)" fill="none" stroke-width="1.35" opacity="0.76" stroke="#94a3b8">
+            <circle cx="8" cy="4.5" r="2.5" /><path d="M3 14v-2a5 5 0 0 1 10 0v2" />
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1095" y="240" class="t-primary" font-size="11" font-weight="600" text-anchor="middle" fill="#ffffff">AI 客户端</text>
+        <text data-detail="context" x="1095" y="256" class="t-muted" font-size="9" text-anchor="middle" fill="#94a3b8" font-weight="500">Cursor / Claude</text>
+        </g>
 
-  <text x="40" y="300" class="t">③ 全程在本机</text>
-  <text x="40" y="324" class="cap">中继与收集服务只服务本机链路，插件的 networkAccess 只允许 ws://localhost:3055；</text>
-  <text x="40" y="346" class="cap">注意中继未绑定回环地址（默认监听所有网卡），共享网络里请自行加防火墙限制。</text>
-  <text x="40" y="378" class="cap">版本标识统一为一个号：package.json 的 version、插件上报的 BUILD、门槛期望值三处一致（当前 0.4.0）。</text>
+        
+        <g data-detail="context" data-edge-from="browser" data-edge-to="collect" data-edge-label="拉取脚本" data-edge-key="0" data-edge-id="pull-script">
+          <rect x="210.8" y="72" width="48.4" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="235" y="82" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">拉取脚本</text>
+        </g>
+        <g data-detail="context" data-edge-from="collect" data-edge-to="pages" data-edge-label="回传落盘" data-edge-key="1" data-edge-id="write-tree">
+          <rect x="450.8" y="72" width="48.4" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="475" y="82" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">回传落盘</text>
+        </g>
+        <g data-detail="context" data-edge-from="pages" data-edge-to="scripts" data-edge-label="读页面树" data-edge-key="2" data-edge-id="read-tree">
+          <rect x="690.8" y="72" width="48.4" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="715" y="82" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">读页面树</text>
+        </g>
+        <g data-detail="context" data-edge-from="scripts" data-edge-to="mcp" data-edge-label="调用" data-edge-key="3" data-edge-id="call-tools">
+          <rect x="799" y="160" width="30" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="814" y="170" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">调用</text>
+        </g>
+        <g data-detail="context" data-edge-from="mcp" data-edge-to="relay" data-edge-label="WebSocket" data-edge-key="4" data-edge-id="ws-down">
+          <rect x="678.4" y="222" width="53.199999999999996" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="705" y="232" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">WebSocket</text>
+        </g>
+        <g data-detail="context" data-edge-from="relay" data-edge-to="plugin" data-edge-label="同频道广播" data-edge-key="5" data-edge-id="same-channel">
+          <rect x="316" y="222" width="58" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="345" y="232" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">同频道广播</text>
+        </g>
+        <g data-detail="context" data-edge-from="ai" data-edge-to="mcp" data-edge-label="stdio" data-edge-key="6" data-edge-id="stdio">
+          <rect x="948" y="222" width="34" height="14" rx="3" class="c-mask" fill="#0f172a" stroke="none" />
+          <text x="965" y="232" class="t-edge-default" font-size="8" text-anchor="middle" fill="#94a3b8">stdio</text>
+        </g>
 
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#8c959f" />
-    </marker>
-  </defs>
-</svg>
+        
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="本机服务" fill="#fbbf24">
+          <rect data-graph-role="structural-frame-label-mask" x="254" y="40" width="53.199999999999996" height="16" rx="3" class="c-mask" fill="#262829" stroke="#695728" stroke-width="0.8" />
+          <text data-boundary-label="" x="258" y="53" class="t-cloud" font-size="9" font-weight="600" fill="#fbbf24">本机服务</text>
+        </g>
+
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Figma 桌面端" fill="#fbbf24">
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="190" width="74.8" height="16" rx="3" class="c-mask" fill="#262829" stroke="#695728" stroke-width="0.8" />
+          <text data-boundary-label="" x="18" y="203" class="t-cloud" font-size="9" font-weight="600" fill="#fbbf24">Figma 桌面端</text>
+        </g>
+
+        
+        <g data-legend="" data-legend-bridge="">
+          <text x="40" y="326" class="t-primary" font-size="12" font-weight="650" fill="#ffffff">图例</text>
+          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="前端" data-legend-x="40" data-legend-baseline="346" data-legend-width="68">
+            <rect x="40" y="337" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1" fill="#122f43" stroke="#1d9eb7" />
+            <text x="62" y="346" class="t-muted" font-size="10" font-weight="500" fill="#94a3b8">前端</text>
+          </g>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="后端" data-legend-x="130" data-legend-baseline="346" data-legend-width="68">
+            <rect x="130" y="337" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1" fill="#142f39" stroke="#2a9e7a" />
+            <text x="152" y="346" class="t-muted" font-size="10" font-weight="500" fill="#94a3b8">后端</text>
+          </g>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="数据库" data-legend-x="220" data-legend-baseline="346" data-legend-width="81">
+            <rect x="220" y="337" width="16" height="10" rx="2.5" class="c-database" stroke-width="1" fill="#232645" stroke="#7c6abf" />
+            <text x="242" y="346" class="t-muted" font-size="10" font-weight="500" fill="#94a3b8">数据库</text>
+          </g>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="外部系统" data-legend-x="323" data-legend-baseline="346" data-legend-width="93">
+            <rect x="323" y="337" width="16" height="10" rx="2.5" class="c-external" stroke-width="1" fill="#20293c" stroke="#6f7c90" />
+            <text x="345" y="346" class="t-muted" font-size="10" font-weight="500" fill="#94a3b8">外部系统</text>
+          </g>
+        </g>
+      </svg>
