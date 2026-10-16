@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <title>Figma 本地通道</title>
+    <style>
+      /* 全部取值只在这一个 :root 里定义，下面的规则一律引用 var()。
+         规格见仓库根《插件面板UI规格.md》。 */
+      :root {
+        --bg-canvas: #17181b;
+        --bg-surface: #1f2126;
+        --bg-surface-2: #262930;
+        --bg-hover: #2b2f37;
+        --bg-active: #333844;
+        --line-hairline: #33373f;
+        --line-strong: #454b56;
+        --text-1: #eaecf0;
+        --text-2: #b6bcc8;
+        --text-3: #8c93a1;
+        --accent: #18a0fb;
+        --accent-hover: #46b8ff;
+        --accent-text: #46b8ff;
+        --on-accent: #08131c;
+        --ok: #4ade80;
+        --ok-bg: #12301f;
+        --warn: #f59e0b;
+        --warn-bg: #3a2608;
+        --err: #ff8f8f;
+        --err-bg: #35161a;
+        --danger: #d92d20;
+        --danger-hover: #f04438;
+        --danger-bg: rgba(217, 45, 32, 0.16);
+        --danger-bg-hover: rgba(217, 45, 32, 0.28);
+        --on-danger: #ffffff;
+        --idle: #b6bcc8;
+        --idle-bg: #262930;
+        --shadow-rgb: 0, 0, 0;
+
+        --font-ui: "Microsoft YaHei", "Noto Sans SC", -apple-system, "Segoe UI",
+          Roboto, sans-serif;
+        --font-mono: "Consolas", "JetBrains Mono", "SFMono-Regular", monospace;
+
+        --t-2xs: 11px; --lh-2xs: 16px;
+        --t-xs: 12px;  --lh-xs: 18px;
+        --t-sm: 13px;  --lh-sm: 20px;
+        --t-md: 14px;  --lh-md: 20px;
+        --t-lg: 15px;  --lh-lg: 22px;
+        --w-400: 400; --w-500: 500; --w-600: 600;
+
+        --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px;
+        --s-5: 16px; --s-6: 20px; --s-7: 24px;
+
+        --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-pill: 999px;
+        --bd-w-1: 1px; --bd-w-2: 2px;
+        --bd-hairline: var(--bd-w-1) solid var(--line-hairline);
+        --bd-strong: var(--bd-w-1) solid var(--line-strong);
+        --sh-1: 0 1px 2px rgba(var(--shadow-rgb), 0.35);
+        --sh-2: 0 2px 8px rgba(var(--shadow-rgb), 0.35);
+        --sh-inset: inset 0 0 0 1px var(--line-strong);
+        --focus-ring: 0 0 0 2px var(--bg-canvas), 0 0 0 4px var(--accent);
+
+        --h-tab: 32px; --h-btn: 34px; --h-btn-sm: 26px; --h-input: 32px;
+        --h-pill: 22px; --h-track: 6px; --h-code: 96px; --hit-min: 28px;
+        --h-dock-line: 3px; --sz-dot: 6px;
+        --mw-brand: 190px; --mw-field: 88px;
+
+        --d-1: 120ms; --d-2: 180ms; --d-3: 240ms; --pulse: 1200ms;
+        --ease-std: cubic-bezier(0.2, 0.7, 0.3, 1);
+        --lift: 1px; --rise: 4px;
+        --tr-color: color var(--d-1) var(--ease-std),
+          background-color var(--d-1) var(--ease-std),
+          border-color var(--d-1) var(--ease-std);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg-canvas: #f5f5f5;
+          --bg-surface: #ffffff;
+          --bg-surface-2: #f0f0f0;
+          --bg-hover: #e8e8e8;
+          --bg-active: #dedede;
+          --line-hairline: #e0e0e0;
+          --line-strong: #c8c8c8;
+          --text-1: #1e1e1e;
+          --text-2: #555555;
+          --text-3: #808080;
+          --accent: #0d99ff;
+          --accent-hover: #0b87e0;
+          --accent-text: #0b87e0;
+          --on-accent: #ffffff;
+          --ok: #14ae5c;
+          --ok-bg: #e5f5ec;
+          --warn: #b45309;
+          --warn-bg: #fff4e5;
+          --err: #d92d20;
+          --err-bg: #fde8e8;
+          --idle: #808080;
+          --idle-bg: #f0f0f0;
+          --shadow-rgb: 0, 0, 0;
+          --danger: #d92d20;
+          --danger-hover: #b42318;
+          --danger-bg: rgba(217, 45, 32, 0.10);
+          --danger-bg-hover: rgba(217, 45, 32, 0.18);
+          --on-danger: #ffffff;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        :root { --d-1: 0ms; --d-2: 0ms; --d-3: 0ms; --pulse: 0ms; }
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body { height: 100%; margin: 0; }
+
+      body {
+        background: var(--bg-canvas);
+        color: var(--text-1);
+        font-family: var(--font-ui);
+        font-size: var(--t-sm);
+        line-height: var(--lh-sm);
+        padding: var(--s-4) var(--s-5);
+        overflow: hidden;
+      }
+
+      .viewport {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-4);
+        height: 100%;
+        min-height: 0;
+        position: relative;
+      }
+
+      /* ---------- A1 顶栏：收起与展开内容完全一致 ---------- */
+      .appbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-2);
+        padding: var(--s-1) 0 var(--s-4);
+        flex: none;
+        background: var(--bg-canvas);
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-1);
+        max-width: var(--mw-brand);
+        min-width: 0;
+      }
+      .brand-name {
+        font-size: var(--t-lg);
+        line-height: var(--lh-lg);
+        font-weight: var(--w-600);
+        color: var(--text-1);
+        white-space: nowrap;
+      }
+      .brand-sub {
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        color: var(--text-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .appbar-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--s-2);
+        margin-left: auto;
+        flex: none;
+      }
+
+      /* ---------- A2 标签 ---------- */
+      .tabs {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--s-1);
+        border-bottom: var(--bd-hairline);
+        padding-bottom: var(--s-2);
+        flex: none;
+      }
+      .tab {
+        height: var(--h-tab);
+        padding: 0 var(--s-4);
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--font-ui);
+        font-size: var(--t-md);
+        line-height: var(--lh-md);
+        font-weight: var(--w-600);
+        color: var(--text-2);
+        background: transparent;
+        border: 0;
+        border-bottom: var(--bd-w-2) solid transparent;
+        border-radius: var(--r-xs) var(--r-xs) 0 0;
+        cursor: pointer;
+        transition: var(--tr-color);
+      }
+      .tab:hover { color: var(--text-1); background: var(--bg-hover); }
+      .tab:active { background: var(--bg-active); }
+      .tab[aria-selected="true"] { color: var(--text-1); border-bottom-color: var(--accent); }
+      .tab:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+      /* ---------- 滚动正文 ---------- */
+      .panel-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--line-strong) transparent;
+      }
+      .panel-body::-webkit-scrollbar { width: var(--s-3); }
+      .panel-body::-webkit-scrollbar-thumb {
+        background: var(--line-strong);
+        border-radius: var(--r-pill);
+      }
+      .tab-content { display: none; flex-direction: column; gap: var(--s-4); }
+      .tab-content.active {
+        display: flex;
+        animation: rise var(--d-3) var(--ease-std);
+      }
+      @keyframes rise { from { opacity: 0; transform: translateY(var(--rise)); } to { opacity: 1; } }
+
+      /* ---------- 卡片 ---------- */
+      .card {
+        background: var(--bg-surface);
+        border: var(--bd-hairline);
+        border-radius: var(--r-md);
+        box-shadow: var(--sh-1);
+        padding: var(--s-5);
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-3);
+      }
+      .card-title {
+        font-size: var(--t-md);
+        line-height: var(--lh-md);
+        font-weight: var(--w-600);
+      }
+      .card-body { font-size: var(--t-sm); line-height: var(--lh-sm); color: var(--text-2); }
+      .card-actions { display: flex; justify-content: flex-end; }
+
+      /* ---------- 按钮 ---------- */
+      .btn {
+        height: var(--h-btn);
+        padding: 0 var(--s-5);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--s-2);
+        font-family: var(--font-ui);
+        font-size: var(--t-md);
+        line-height: var(--lh-md);
+        font-weight: var(--w-600);
+        border: 0;
+        border-radius: var(--r-sm);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: var(--tr-color);
+      }
+      .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+      .btn:active { transform: translateY(var(--lift)); box-shadow: var(--sh-2); }
+      .btn-sm { height: var(--h-btn-sm); padding: 0 var(--s-3); font-size: var(--t-2xs); line-height: var(--lh-2xs); }
+      .btn-primary { background: var(--accent); color: var(--on-accent); }
+      .btn-primary:hover { background: var(--accent-hover); }
+      .btn-secondary { background: var(--bg-surface-2); color: var(--text-1); border: var(--bd-hairline); }
+      .btn-secondary:hover { background: var(--bg-hover); }
+      .btn-ghost { background: transparent; color: var(--text-2); }
+      .btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
+      .btn:disabled { background: var(--bg-surface-2); color: var(--text-3); cursor: not-allowed; transform: none; box-shadow: none; }
+      .btn-block { width: 100%; }
+
+      /* ---------- 状态胶囊 ---------- */
+      .pill {
+        height: var(--h-pill);
+        padding: 0 var(--s-3);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--s-2);
+        border-radius: var(--r-pill);
+        font-size: var(--t-2xs);
+        line-height: var(--lh-2xs);
+        font-weight: var(--w-500);
+        white-space: nowrap;
+        transition: var(--tr-color);
+      }
+      .pill-dot {
+        width: var(--sz-dot);
+        height: var(--sz-dot);
+        border-radius: var(--r-pill);
+        flex: none;
+        background: var(--idle);
+      }
+      .pill-ok { background: var(--ok-bg); color: var(--ok); }
+      .pill-ok .pill-dot { background: var(--ok); }
+      .pill-err { background: var(--err-bg); color: var(--err); }
+      .pill-err .pill-dot { background: var(--err); }
+      .pill-warn { background: var(--warn-bg); color: var(--warn); }
+      .pill-warn .pill-dot { background: var(--warn); animation: breathe var(--pulse) var(--ease-std) infinite; }
+      .pill-busy { background: var(--bg-surface-2); color: var(--text-1); }
+      .pill-busy .pill-dot { background: var(--accent-text); }
+      .pill-idle { background: var(--idle-bg); color: var(--text-2); }
+      .pill-idle .pill-dot { background: var(--idle); }
+      @keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+      /* ---------- 状态条 ---------- */
+      .statusbar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        background: var(--bg-surface);
+        border: var(--bd-hairline);
+        border-left: var(--bd-w-2) solid var(--idle);
+        border-radius: var(--r-md);
+        padding: var(--s-4) var(--s-5);
+      }
+      .statusbar.ok { border-left-color: var(--ok); }
+      .statusbar.err { border-left-color: var(--err); }
+      .statusbar.warn { border-left-color: var(--warn); }
+      .status-main { font-size: var(--t-sm); line-height: var(--lh-sm); color: var(--text-1); }
+      .status-hint { font-size: var(--t-xs); line-height: var(--lh-xs); color: var(--text-2); }
+      .mono { font-family: var(--font-mono); font-size: var(--t-xs); }
+
+      /* ---------- 字段行 ---------- */
+      .field-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-3);
+      }
+      .field-label { font-size: var(--t-xs); line-height: var(--lh-xs); color: var(--text-2); }
+      .input-num {
+        width: var(--mw-field);
+        height: var(--h-input);
+        padding: 0 var(--s-3);
+        text-align: right;
+        font-family: var(--font-mono);
+        font-size: var(--t-sm);
+        color: var(--text-1);
+        background: var(--bg-surface-2);
+        border: var(--bd-strong);
+        border-radius: var(--r-xs);
+        font-variant-numeric: tabular-nums;
+        transition: var(--tr-color);
+      }
+      .input-num::-webkit-outer-spin-button,
+      .input-num::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .input-num[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+      .input-num:hover { border-color: var(--accent-text); }
+      .input-num:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+      .input-num:disabled { color: var(--text-3); border-color: var(--line-hairline); }
+      .input-num.is-invalid { border-color: var(--err); }
+      /* 聚焦清空后，旧值留在占位符里，用弱化色显示，不跟真实输入混淆 */
+      .input-num::placeholder { color: var(--text-3); opacity: 1; }
+      .field-error {
+        font-size: var(--t-2xs);
+        line-height: var(--lh-2xs);
+        color: var(--err);
+        text-align: right;
+        display: none;
+      }
+      .field-error.show { display: block; }
+
+      .select {
+        width: var(--mw-field);
+        height: var(--h-input);
+        padding: 0 var(--s-3);
+        font-family: var(--font-ui);
+        font-size: var(--t-sm);
+        color: var(--text-1);
+        background: var(--bg-surface-2);
+        border: var(--bd-strong);
+        border-radius: var(--r-xs);
+      }
+      .select:hover { border-color: var(--accent-text); }
+      .select:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+      .select:disabled { color: var(--text-3); border-color: var(--line-hairline); }
+      .actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--s-3);
+      }
+      .actions-grid .btn { padding: 0 var(--s-3); font-size: var(--t-xs); line-height: var(--lh-xs); }
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: var(--s-2);
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        color: var(--text-2);
+      }
+      .check-row input { accent-color: var(--accent); }
+      .field-help {
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        color: var(--text-3);
+      }
+
+      .input-text {
+        width: 100%;
+        min-width: 0;
+        height: var(--h-input);
+        padding: 0 var(--s-3);
+        font-family: var(--font-ui);
+        font-size: var(--t-xs);
+        color: var(--text-1);
+        background: var(--bg-surface-2);
+        border: var(--bd-strong);
+        border-radius: var(--r-xs);
+      }
+      .input-text:hover { border-color: var(--accent-text); }
+      .input-text:focus { outline: none; border-color: var(--accent); box-shadow: var(--focus-ring); }
+      .input-text:disabled { color: var(--text-3); border-color: var(--line-hairline); }
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-3);
+      }
+      .card-title-row {
+        display: flex;
+        align-items: center;
+        gap: var(--s-2);
+        min-width: 0;
+      }
+      .hint-icon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--s-5);
+        height: var(--s-5);
+        border: var(--bd-w-1) solid var(--line-strong);
+        border-radius: var(--r-pill);
+        color: var(--text-3);
+        font-size: var(--t-2xs);
+        line-height: var(--lh-2xs);
+        cursor: help;
+        flex: none;
+      }
+      .hint-icon:hover,
+      .hint-icon:focus-visible {
+        color: var(--text-1);
+        border-color: var(--accent);
+        outline: none;
+      }
+      .hint-tip {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        width: 240px;
+        max-width: calc(100vw - var(--s-5) * 2);
+        padding: var(--s-3);
+        border: var(--bd-hairline);
+        border-radius: var(--r-sm);
+        background: var(--bg-surface-2);
+        color: var(--text-2);
+        box-shadow: var(--sh-2);
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        font-weight: var(--w-400);
+        white-space: normal;
+        pointer-events: none;
+      }
+      .hint-icon:hover .hint-tip,
+      .hint-icon:focus-visible .hint-tip {
+        display: block;
+      }
+      .card-fold { display: flex; flex-direction: column; gap: var(--s-3); }
+      .card-fold.collapsed { display: none; }
+      .toast-stack {
+        position: fixed;
+        top: var(--s-4);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        width: calc(100% - var(--s-5) * 2);
+        max-width: var(--maxw);
+        pointer-events: none;
+      }
+      .toast {
+        padding: var(--s-3) var(--s-4);
+        border: var(--bd-hairline);
+        border-left: var(--bd-w-2) solid var(--accent);
+        border-radius: var(--r-sm);
+        background: var(--bg-surface);
+        color: var(--text-1);
+        box-shadow: var(--sh-2);
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        animation: toast-in var(--d-2) var(--ease-std);
+      }
+      .toast.ok { border-left-color: var(--ok); }
+      .toast.err { border-left-color: var(--err); }
+      .toast.warn { border-left-color: var(--warn); }
+      .toast.hide { opacity: 0; transform: translateY(calc(var(--s-2) * -1)); transition: opacity var(--d-2), transform var(--d-2); }
+      @keyframes toast-in { from { opacity: 0; transform: translateY(calc(var(--s-2) * -1)); } to { opacity: 1; transform: translateY(0); } }
+      .disconnect-bar {
+        display: none;
+        flex: none;
+        padding: var(--s-3) 0 0;
+      }
+      .disconnect-bar.show { display: block; }
+      .btn-danger {
+        background: var(--danger-bg);
+        color: var(--err);
+        border: var(--bd-w-1) solid var(--danger);
+      }
+      .btn-danger:hover {
+        background: var(--danger-bg-hover);
+        color: var(--danger-hover);
+        border-color: var(--danger-hover);
+      }
+      #meta-channel, #meta-port { font-weight: var(--w-600); }
+
+      /* ---------- 会话摘要 ---------- */
+      .meta {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: var(--s-2) var(--s-3);
+        align-items: baseline;
+      }
+      .meta-key { font-size: var(--t-xs); line-height: var(--lh-xs); color: var(--text-3); }
+      .meta-val {
+        min-width: 0; /* 网格列是 1fr，长命令名不换行时会把列撑爆，这里显式允许收缩 */
+        font-size: var(--t-sm);
+        line-height: var(--lh-sm);
+        color: var(--text-1);
+        justify-self: end;
+        font-variant-numeric: tabular-nums;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--s-2);
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* ---------- 代码块 ---------- */
+      .codeblock {
+        width: 100%;
+        height: var(--h-code);
+        overflow-y: auto;
+        padding: var(--s-4);
+        background: var(--bg-surface-2);
+        box-shadow: var(--sh-inset);
+        border: 0;
+        border-radius: var(--r-xs);
+        font-family: var(--font-mono);
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        color: var(--text-1);
+        resize: none;
+      }
+      .codeblock:focus-visible { outline: none; box-shadow: var(--sh-inset), var(--focus-ring); }
+
+      /* ---------- A6 常驻进度栏 ---------- */
+      .dock {
+        flex: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-2);
+        padding: var(--s-4) var(--s-5) var(--s-3);
+        margin: 0 calc(var(--s-5) * -1) calc(var(--s-4) * -1);
+        background: var(--bg-surface);
+        border-top: var(--bd-hairline);
+      }
+      .dock-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-3);
+      }
+      .dock-title {
+        font-size: var(--t-2xs);
+        line-height: var(--lh-2xs);
+        font-weight: var(--w-500);
+        color: var(--text-3);
+        font-variant-numeric: tabular-nums;
+      }
+      .dock-subject {
+        font-size: var(--t-sm);
+        line-height: var(--lh-sm);
+        color: var(--text-1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dock.is-idle .dock-subject { color: var(--text-2); }
+      .track {
+        width: 100%;
+        height: var(--h-track);
+        background: var(--bg-surface-2);
+        border-radius: var(--r-pill);
+        overflow: hidden;
+      }
+      .fill {
+        height: var(--h-track);
+        width: 0;
+        background: var(--accent);
+        border-radius: var(--r-pill);
+        transition: width var(--d-2) var(--ease-std), background-color var(--d-1) var(--ease-std);
+      }
+      .fill.done { background: var(--ok); }
+      .fill.error { background: var(--err); }
+      .dock-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: var(--t-xs);
+        line-height: var(--lh-xs);
+        color: var(--text-2);
+        font-variant-numeric: tabular-nums;
+      }
+      .dock-line {
+        display: none;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: var(--h-dock-line);
+        width: 0;
+        background: var(--accent);
+        border-radius: var(--r-pill);
+        transition: width var(--d-2) var(--ease-std);
+      }
+
+      /* ---------- 收起态：头部保持一致，正文与进度栏让位 ---------- */
+      body.collapsed .tabs,
+      body.collapsed .panel-body,
+      body.collapsed .dock,
+      body.collapsed .disconnect-bar { display: none; }
+      body.collapsed { padding: var(--s-2) var(--s-5); }
+      body.collapsed .appbar { padding: 0; flex: 1; }
+      body.collapsed .dock-line { display: block; }
+
+      ol.steps { margin: 0; padding-left: var(--s-5); display: flex; flex-direction: column; gap: var(--s-2); }
+      ol.steps li { font-size: var(--t-sm); line-height: var(--lh-sm); color: var(--text-2); }
+      .footnote {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: var(--s-4);
+        font-size: var(--t-2xs);
+        line-height: var(--lh-2xs);
+        color: var(--text-3);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="viewport">
+      <div id="toast-stack" class="toast-stack"></div>
+      <!-- A1 顶栏：收起与展开显示同一套内容 -->
+      <div class="appbar">
+        <div class="brand">
+          <span class="brand-name">Figma 本地通道</span>
+          <span class="brand-sub">AI 读写当前 Figma 文件</span>
+        </div>
+        <div class="appbar-actions">
+          <span id="mini-status" class="pill pill-idle"><i class="pill-dot"></i>待连接</span>
+          <button id="btn-wide" class="btn btn-ghost btn-sm">加宽</button>
+          <button id="btn-collapse" class="btn btn-ghost btn-sm">折叠</button>
+        </div>
+      </div>
+
+      <!-- A2 标签 -->
+      <div class="tabs" role="tablist">
+        <button id="tab-connection" class="tab" role="tab" aria-selected="true">连接</button>
+        <button id="tab-file" class="tab" role="tab" aria-selected="false">文件</button>
+        <button id="tab-about" class="tab" role="tab" aria-selected="false">关于</button>
+      </div>
+
+      <div class="panel-body">
+        <!-- A3 连接页 -->
+        <div id="content-connection" class="tab-content active">
+          <div class="card">
+            <button id="btn-connect" class="btn btn-primary btn-block">连接</button>
+            <div class="field-row">
+              <label class="field-label" for="port">本地通道端口</label>
+              <input class="input-num" id="port" type="number" value="3055" min="1024" max="65535" />
+            </div>
+            <div class="field-error" id="port-error">端口需在 1024 到 65535 之间</div>
+          </div>
+
+          <div id="connection-status" class="statusbar err">
+            <div class="status-main">未连接到本地通道</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">本次会话</div>
+            <div class="meta">
+              <span class="meta-key">频道</span><span class="meta-val" id="meta-channel">-</span>
+              <span class="meta-key">端口</span><span class="meta-val" id="meta-port">3055</span>
+              <span class="meta-key">本次操作耗时</span><span class="meta-val" id="meta-elapsed">-</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- A4 关于页 -->
+        <div id="content-about" class="tab-content">
+          <div class="card">
+            <div class="card-title">这是什么</div>
+            <div class="card-body">
+              把 AI 工具和本地通道连起来，让 AI 直接读写当前 Figma 文件的图层、变量与组件。
+              同名画板整体替换，所以推送可以反复跑。
+            </div>
+            <ol class="steps">
+              <li>启动本地通道：双击 <span class="mono">start-figma-bridge-resident.bat</span></li>
+              <li>在本面板点"连接"，频道固定为 <span class="mono">powerplant</span></li>
+              <li>让 AI 工具调用同名 MCP 服务即可操作画布</li>
+            </ol>
+          </div>
+
+          <div class="card" id="mcp-config">
+            <div class="card-title">接入配置</div>
+            <div class="card-body">选择客户端后复制对应片段（路径按本机实际位置）：</div>
+            <div class="field-row">
+              <label class="field-label" for="mcp-client">客户端</label>
+              <select class="select" id="mcp-client">
+                <option value="cursor">Cursor</option>
+                <option value="claude">Claude Code</option>
+                <option value="codex">Codex</option>
+                <option value="generic">通用 JSON</option>
+              </select>
+            </div>
+            <textarea class="codeblock" id="mcp-json" readonly rows="5"></textarea>
+            <div class="card-actions">
+              <button id="btn-copy" class="btn btn-secondary btn-sm">复制</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">使用统计</div>
+            <div class="card-body">
+              本版本不含任何使用统计：上游那份向 Google Analytics 上报插件打开、频道加入与命令名的代码已经移除，
+              通道地址也只剩本机的 <span class="mono">ws://localhost:3055</span>。
+            </div>
+          </div>
+        </div>
+
+        <!-- A4.5 文件页 -->
+        <div id="content-file" class="tab-content">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-row">
+                <div class="card-title">导出画板</div>
+                <span class="hint-icon" tabindex="0" aria-label="导出画板使用提示" title="选择格式和倍率后，可导出当前选中的画板，或导出当前页全部画板。先选好导出文件夹，文件会直接写入该目录。">
+                  ?
+                  <span class="hint-tip">选择格式和倍率后，可导出当前选中的画板，或导出当前页全部画板。先选好导出文件夹，文件会直接写入该目录。</span>
+                </span>
+              </div>
+              <button id="btn-toggle-export" class="btn btn-ghost btn-sm">收起</button>
+            </div>
+            <div id="export-card-body" class="card-fold">
+              <div class="card-body">从当前页导出选中画板或全部画板。全部导出会逐张下载文件。</div>
+              <div class="field-row">
+                <label class="field-label" for="export-format">格式</label>
+                <select class="select" id="export-format">
+                  <option value="PNG">PNG</option>
+                  <option value="JPG">JPG</option>
+                  <option value="SVG">SVG</option>
+                  <option value="PDF">PDF</option>
+                </select>
+              </div>
+              <div class="field-row">
+                <label class="field-label" for="export-scale">倍率</label>
+                <input class="input-num" id="export-scale" type="number" value="1" min="0.5" max="4" step="0.5" />
+              </div>
+              <div class="field-row">
+                <label class="field-label" for="export-quality">JPG 画质</label>
+                <input class="input-num" id="export-quality" type="number" value="92" min="1" max="100" step="1" />
+              </div>
+              <div class="actions-grid">
+                <button id="btn-export-selected" class="btn btn-secondary">导出选中画板</button>
+                <button id="btn-export-all" class="btn btn-primary">导出全部画板</button>
+              </div>
+              <div class="field-row">
+                <label class="field-label" for="export-dir-input">导出文件夹</label>
+                <input class="input-text" id="export-dir-input" type="text" placeholder="未选择，导出会逐张下载" />
+              </div>
+              <div class="actions-grid">
+                <button id="btn-choose-export-dir" class="btn btn-secondary">选择文件夹</button>
+                <button id="btn-apply-export-dir" class="btn btn-secondary">应用路径</button>
+              </div>
+              <div class="actions-grid">
+                <button id="btn-clear-export-dir" class="btn btn-ghost" disabled>使用浏览器下载</button>
+              </div>
+              <div class="field-help" id="export-dir-hint">未选择文件夹，导出会逐张下载。</div>
+              <div class="field-help" id="export-target-hint">选中画板后可直接导出；全部导出按当前页顺序执行。</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">导入 SVG</div>
+              <button id="btn-toggle-import" class="btn btn-ghost btn-sm">收起</button>
+            </div>
+            <div id="import-card-body" class="card-fold">
+              <div class="card-body">选择本机 SVG 文件，导入到当前页；可套成画板并补绑颜色变量。</div>
+              <button id="btn-choose-svg" class="btn btn-secondary btn-block">选择 SVG 文件</button>
+              <input id="svg-file" type="file" accept=".svg,image/svg+xml" hidden />
+              <div class="field-row">
+                <label class="field-label" for="svg-scale">倍率</label>
+                <input class="input-num" id="svg-scale" type="number" value="1" min="0.1" max="10" step="0.1" />
+              </div>
+              <label class="check-row"><input id="svg-as-board" type="checkbox" checked /> 作为画板导入</label>
+              <label class="check-row"><input id="svg-bind" type="checkbox" checked /> 补绑颜色变量</label>
+              <button id="btn-import-svg" class="btn btn-primary btn-block" disabled>导入 SVG</button>
+              <div class="field-help" id="import-file-hint">还没有选择文件</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div id="disconnect-bar" class="disconnect-bar">
+        <button id="btn-disconnect" class="btn btn-danger btn-block">断开本地通道</button>
+      </div>
+
+      <!-- A6 常驻进度栏：不进滚动区，任何标签页下都在 -->
+      <div id="progress-container" class="dock is-idle">
+        <div class="dock-head">
+          <span class="dock-title">执行进度</span>
+          <span class="dock-title" id="progress-percentage">0%</span>
+        </div>
+        <div class="dock-subject" id="progress-message">当前没有任务</div>
+        <div class="track"><div class="fill" id="progress-bar"></div></div>
+        <div class="dock-foot">
+          <span id="progress-status">空闲</span>
+          <span id="progress-elapsed"></span>
+        </div>
+      </div>
+
+      <div class="dock-line" id="dock-line"></div>
+    </div>
+
+    <script>
+      // 插件构建号：连接后随 hello 自报给中继，前置流程面板拿它核对"跑的是不是这份代码"。
+      // 改 code.js 或 ui.html 之后都要把它加一——改了不重跑插件就是靠这个号发现的。
+      const BUILD = "2026-10-15.1";
+
+      const state = {
+        socket: null,
+        channel: null,
+        connected: false,
+        serverPort: 3055,
+        pendingRequests: new Map(),
+        // 每条命令的开始时间，进度栏与摘要卡显示真实耗时都靠它
+        commandTracking: new Map(),
+        activeRequestId: null,
+        localRequests: new Map(),
+        relayRequests: new Map(),
+        exportBusy: false,
+        importBusy: false,
+        activeTabId: "tab-connection",
+      };
+
+      const portInput = document.getElementById("port");
+      const connectButton = document.getElementById("btn-connect");
+      const connectionStatus = document.getElementById("connection-status");
+      const miniStatus = document.getElementById("mini-status");
+      const progressBar = document.getElementById("progress-bar");
+      const progressMessage = document.getElementById("progress-message");
+      const progressStatus = document.getElementById("progress-status");
+      const progressPercentage = document.getElementById("progress-percentage");
+      const progressElapsed = document.getElementById("progress-elapsed");
+      const progressContainer = document.getElementById("progress-container");
+      const dockLine = document.getElementById("dock-line");
+      const metaChannel = document.getElementById("meta-channel");
+      const metaPort = document.getElementById("meta-port");
+      const metaElapsed = document.getElementById("meta-elapsed");
+      const portError = document.getElementById("port-error");
+      const exportFormat = document.getElementById("export-format");
+      const exportScale = document.getElementById("export-scale");
+      const exportQuality = document.getElementById("export-quality");
+      const exportTargetHint = document.getElementById("export-target-hint");
+      const exportSelectedButton = document.getElementById("btn-export-selected");
+      const exportAllButton = document.getElementById("btn-export-all");
+      const exportDirHint = document.getElementById("export-dir-hint");
+      const chooseExportDirButton = document.getElementById("btn-choose-export-dir");
+      const clearExportDirButton = document.getElementById("btn-clear-export-dir");
+      const exportDirInput = document.getElementById("export-dir-input");
+      const applyExportDirButton = document.getElementById("btn-apply-export-dir");
+      const disconnectBar = document.getElementById("disconnect-bar");
+      const disconnectButton = document.getElementById("btn-disconnect");
+      const toastStack = document.getElementById("toast-stack");
+      const svgFileInput = document.getElementById("svg-file");
+      const svgScale = document.getElementById("svg-scale");
+      const svgAsBoard = document.getElementById("svg-as-board");
+      const svgBind = document.getElementById("svg-bind");
+      const importSvgButton = document.getElementById("btn-import-svg");
+      const importFileHint = document.getElementById("import-file-hint");
+      let fileStatus = null;
+
+      function fmtMs(ms) {
+        if (ms == null || isNaN(ms)) return "-";
+        if (ms < 1000) return ms + " 毫秒";
+        if (ms < 60000) return (ms / 1000).toFixed(2) + " 秒";
+        return Math.floor(ms / 60000) + " 分 " + Math.round((ms % 60000) / 1000) + " 秒";
+      }
+
+      // 状态胶囊：点与文字一起变，不只靠颜色区分
+      function setPill(kind, text) {
+        const cls = { ok: "pill-ok", err: "pill-err", warn: "pill-warn", busy: "pill-busy", idle: "pill-idle" }[kind] || "pill-idle";
+        miniStatus.className = "pill " + cls;
+        miniStatus.innerHTML = '<i class="pill-dot"></i>' + text;
+      }
+
+      function setDock(kind) {
+        progressBar.className = "fill" + (kind === "done" ? " done" : kind === "error" ? " error" : "");
+        progressContainer.classList.toggle("is-idle", kind === "idle");
+      }
+
+      function afterCommand(kind) {
+        setPill(state.connected ? "ok" : "err", state.connected ? "已连接" : "未连接");
+        if (kind === "error") setPill(state.connected ? "busy" : "err", state.connected ? "已完成（有错）" : "未连接");
+      }
+
+      // 中继（本机 3055）重启或抖动会让这条 WebSocket 断掉，断了每 2 秒自己重试
+      let reconnectTimer = null;
+      function scheduleReconnect() {
+        if (reconnectTimer) return;
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          if (!state.connected) connectToServer(state.serverPort || 3055);
+        }, 2000);
+      }
+
+      function updateDisconnectVisibility() {
+        const onConnectionTab = state.activeTabId === "tab-connection";
+        disconnectBar.classList.toggle("show", state.connected && onConnectionTab);
+      }
+
+      function updateConnectionStatus(isConnected, message) {
+        state.connected = isConnected;
+
+        const main = isConnected ? "已连接本地通道" : (message || "未连接到本地通道");
+        const hint = isConnected
+          ? ""
+          : "请先启动本地通道：双击 <span class='mono'>start-figma-bridge-resident.bat</span>，再点上方的“连接”。";
+
+        connectionStatus.innerHTML =
+          '<div class="status-main">' + main + "</div>" + (hint ? '<div class="status-hint">' + hint + "</div>" : "");
+        connectionStatus.className = "statusbar " + (isConnected ? "ok" : "err");
+
+        setPill(isConnected ? "ok" : "err", isConnected ? "已连接" : "未连接");
+        connectButton.textContent = "连接";
+        connectButton.className = "btn btn-primary btn-block";
+        connectButton.style.display = isConnected ? "none" : "";
+        updateDisconnectVisibility();
+        portInput.disabled = isConnected;
+        metaPort.textContent = String(state.serverPort || portInput.value || "-");
+        if (!isConnected) metaChannel.textContent = "-";
+        updateExportDirControls();
+        if (isConnected) syncExportDirToRelay();
+      }
+
+      function connectToServer(port) {
+        try {
+          if (state.connected && state.socket) {
+            updateConnectionStatus(true, "已经在通道里");
+            return;
+          }
+          state.serverPort = port;
+          setPill("warn", "连接中");
+          state.socket = new WebSocket("ws://localhost:" + port);
+
+          state.socket.onopen = () => {
+            // 自报身份与构建号；中继 /status 原样带出，面板拿它核对版本
+            state.socket.send(JSON.stringify({
+              type: "hello",
+              role: "plugin",
+              name: "Figma Plugin",
+              build: BUILD,
+            }));
+            // 固定频道名；留空则退回每次随机生成
+            const FIXED_CHANNEL_NAME = "powerplant";
+            const channelName = FIXED_CHANNEL_NAME || generateChannelName();
+            state.channel = channelName;
+            state.socket.send(JSON.stringify({ type: "join", channel: channelName.trim() }));
+          };
+
+          state.socket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === "system") {
+                if (data.message && data.message.result) {
+                  const channelName = data.channel;
+                  updateConnectionStatus(true, "已连接，频道 <span class='mono'>" + channelName + "</span>");
+                  metaChannel.textContent = channelName;
+                  parent.postMessage(
+                    { pluginMessage: { type: "notify", message: "已连接本地通道 " + channelName } },
+                    "*"
+                  );
+                }
+              } else if (data.type === "error") {
+                updateConnectionStatus(false, "通道报错：" + data.message);
+                state.socket.close();
+              }
+              if (data.type === "relay-result" || data.type === "relay-error") {
+                handleRelayResponse(data);
+                return;
+              }
+              handleSocketMessage(data);
+            } catch (error) {
+              console.error("解析通道消息失败:", error);
+            }
+          };
+
+          state.socket.onclose = () => {
+            state.connected = false;
+            state.socket = null;
+            updateConnectionStatus(false, "连接中断，正在自动重连");
+            setPill("warn", "重连中");
+            scheduleReconnect();
+          };
+
+          state.socket.onerror = () => {
+            state.connected = false;
+            state.socket = null;
+            updateConnectionStatus(false, "连不上本地通道");
+            setPill("warn", "重连中");
+            scheduleReconnect();
+          };
+        } catch (error) {
+          updateConnectionStatus(false, "连接失败：" + (error.message || "未知错误"));
+        }
+      }
+
+      function disconnectFromServer() {
+        if (!state.socket) return;
+        state.socket.onclose = null; // 手动断开就别再自动重连
+        state.socket.close();
+        state.socket = null;
+        state.connected = false;
+        updateConnectionStatus(false, "已断开");
+        setPill("idle", "待连接");
+      }
+
+      async function handleSocketMessage(payload) {
+        const data = payload.message;
+        if (!data) return;
+
+        if (data.id && state.pendingRequests.has(data.id)) {
+          const { resolve, reject } = state.pendingRequests.get(data.id);
+          state.pendingRequests.delete(data.id);
+          if (data.error) reject(new Error(data.error));
+          else resolve(data.result);
+          return;
+        }
+
+        if (data.command) {
+          try {
+            state.activeRequestId = data.id;
+            state.commandTracking.set(data.id, { command: data.command, startedAt: Date.now() });
+            setPill("busy", "执行中");
+            progressMessage.textContent = "收到命令 " + data.command;
+            parent.postMessage(
+              {
+                pluginMessage: { type: "execute-command", id: data.id, command: data.command, params: data.params },
+              },
+              "*"
+            );
+          } catch (error) {
+            sendErrorResponse(data.id, error.message || "命令执行失败");
+          }
+        }
+      }
+
+      function sendCommand(command, params) {
+        return new Promise((resolve, reject) => {
+          if (!state.connected || !state.socket) {
+            reject(new Error("未连接本地通道"));
+            return;
+          }
+          const id = generateId();
+          state.pendingRequests.set(id, { resolve, reject });
+          state.socket.send(
+            JSON.stringify({ id, type: "message", channel: state.channel, message: { id, command, params } })
+          );
+          setTimeout(() => {
+            if (state.pendingRequests.has(id)) {
+              state.pendingRequests.delete(id);
+              reject(new Error("请求超时"));
+            }
+          }, 30000);
+        });
+      }
+
+      function sendSuccessResponse(id, result) {
+        if (!state.connected || !state.socket) return;
+        state.socket.send(JSON.stringify({ id, type: "message", channel: state.channel, message: { id, result } }));
+      }
+
+      function sendErrorResponse(id, errorMessage) {
+        if (!state.connected || !state.socket) return;
+        state.socket.send(
+          JSON.stringify({ id, type: "message", channel: state.channel, message: { id, error: errorMessage, result: {} } })
+        );
+      }
+
+      function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+      }
+
+      function handleRelayResponse(data) {
+        const pending = state.relayRequests.get(data.id);
+        if (!pending) return;
+        state.relayRequests.delete(data.id);
+        if (data.type === "relay-error") pending.reject(new Error(data.error || "本机中继执行失败"));
+        else pending.resolve(data.result);
+      }
+
+      function callRelay(type, payload) {
+        return new Promise((resolve, reject) => {
+          if (!state.connected || !state.socket) {
+            reject(new Error("未连接本地通道"));
+            return;
+          }
+          const id = generateId();
+          state.relayRequests.set(id, { resolve, reject });
+          state.socket.send(JSON.stringify({ type, id, channel: state.channel, ...(payload || {}) }));
+          setTimeout(() => {
+            if (state.relayRequests.has(id)) {
+              state.relayRequests.delete(id);
+              reject(new Error("本机中继请求超时：" + type));
+            }
+          }, 120000);
+        });
+      }
+
+      function showToast(message, kind = "warn") {
+        const el = document.createElement("div");
+        el.className = "toast " + kind;
+        el.textContent = message || "";
+        toastStack.appendChild(el);
+        setTimeout(() => {
+          el.classList.add("hide");
+          setTimeout(() => el.remove(), 260);
+        }, 3000);
+      }
+
+      function saveExportFolderPreference(path) {
+        parent.postMessage({ pluginMessage: { type: "save-export-folder", path: path || "" } }, "*");
+      }
+
+      async function syncExportDirToRelay() {
+        if (!exportDirPath || !state.connected || !state.socket) return;
+        try {
+          await callRelay("set-export-folder", { path: exportDirPath });
+        } catch (error) {
+          setFileStatus("warn", "上次的导出文件夹不可用", error.message || String(error));
+        }
+      }
+
+      // 文件操作的结果统一走顶部弹窗，5 秒自动消失。
+      function notifyPlugin(message) {
+        showToast(message, "ok");
+      }
+
+      function callPlugin(command, params) {
+        return new Promise((resolve, reject) => {
+          const id = generateId();
+          state.localRequests.set(id, { resolve, reject });
+          parent.postMessage(
+            { pluginMessage: { type: "local-command", id, command, params: params || {} } },
+            "*"
+          );
+          setTimeout(() => {
+            if (state.localRequests.has(id)) {
+              state.localRequests.delete(id);
+              reject(new Error("插件命令超时：" + command));
+            }
+          }, 600000);
+        });
+      }
+
+      const EXPORT_EXT = { PNG: "png", JPG: "jpg", SVG: "svg", PDF: "pdf" };
+      const EXPORT_MIME = {
+        PNG: "image/png",
+        JPG: "image/jpeg",
+        SVG: "image/svg+xml",
+        PDF: "application/pdf",
+      };
+      let selectedSvgText = "";
+      let selectedSvgName = "";
+      let exportDirHandle = null;
+      let exportDirPath = "";
+
+      function ensureFileStatus() {
+        if (fileStatus) return fileStatus;
+        fileStatus = document.createElement("div");
+        fileStatus.id = "file-status";
+        fileStatus.className = "statusbar warn";
+        document.getElementById("content-file").appendChild(fileStatus);
+        return fileStatus;
+      }
+
+      function setFileStatus(kind, mainText, hintText) {
+        const box = ensureFileStatus();
+        box.className = "statusbar " + (kind === "ok" ? "ok" : kind === "err" ? "err" : "warn");
+        box.replaceChildren();
+        const main = document.createElement("div");
+        main.className = "status-main";
+        main.textContent = mainText || "";
+        box.appendChild(main);
+        if (hintText) {
+          const hint = document.createElement("div");
+          hint.className = "status-hint";
+          hint.textContent = hintText;
+          box.appendChild(hint);
+        }
+      }
+
+      function updateExportControls() {
+        const isRaster = exportFormat.value === "PNG" || exportFormat.value === "JPG";
+        exportScale.disabled = !isRaster;
+        exportQuality.disabled = exportFormat.value !== "JPG";
+      }
+
+      function setExportBusy(busy) {
+        state.exportBusy = !!busy;
+        exportSelectedButton.disabled = !!busy;
+        exportAllButton.disabled = !!busy;
+        exportFormat.disabled = !!busy;
+        updateExportControls();
+        updateExportDirControls();
+        if (busy) {
+          exportScale.disabled = true;
+          exportQuality.disabled = true;
+        }
+      }
+
+      function safeFileName(name) {
+        return String(name || "未命名画板")
+          .replace(/[\\/:*?"<>|]/g, "_")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 120) || "未命名画板";
+      }
+
+      function makeUniqueName(base, ext, used) {
+        const stem = safeFileName(base);
+        let name = stem + "." + ext;
+        let index = 2;
+        while (used.has(name.toLowerCase())) {
+          name = stem + " (" + index + ")." + ext;
+          index++;
+        }
+        used.add(name.toLowerCase());
+        return name;
+      }
+
+      function base64ToBytes(base64) {
+        const binary = atob(base64 || "");
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+
+      function blobFromBase64(mime, base64) {
+        return new Blob([base64ToBytes(base64)], { type: mime || "application/octet-stream" });
+      }
+
+      async function saveExportFile(name, mime, base64) {
+        const blob = blobFromBase64(mime, base64);
+        if (exportDirHandle) {
+          const fileHandle = await exportDirHandle.getFileHandle(name, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        }
+        if (exportDirPath) {
+          await callRelay("write-export-file", { name, mimeType: mime, data: base64 });
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+
+      function updateExportDirControls() {
+        const browserSupported = typeof window.showDirectoryPicker === "function";
+        const relaySupported = !!(state.connected && state.socket);
+        const supported = browserSupported || relaySupported;
+        chooseExportDirButton.disabled = !supported || state.exportBusy;
+        applyExportDirButton.disabled = !relaySupported || state.exportBusy;
+        clearExportDirButton.disabled = (!exportDirHandle && !exportDirPath) || state.exportBusy;
+        exportDirInput.disabled = state.exportBusy;
+        exportDirInput.value = exportDirPath || (exportDirHandle ? (exportDirHandle.name || "") : "");
+        if (exportDirHandle) {
+          exportDirHint.textContent = "浏览器目录模式：" + (exportDirHandle.name || "已选择");
+        } else if (exportDirPath) {
+          exportDirHint.textContent = "路径已应用，导出会写入该文件夹。";
+        } else if (browserSupported) {
+          exportDirHint.textContent = "未选择文件夹，导出会逐张下载。";
+        } else if (relaySupported) {
+          exportDirHint.textContent = "Figma 不支持浏览器目录选择；可点“选择文件夹”通过本机中继选择，也可直接输入路径后点“应用路径”。";
+        } else {
+          exportDirHint.textContent = "当前环境不支持选择文件夹，导出会逐张下载。";
+        }
+      }
+
+      async function chooseExportDir() {
+        if (typeof window.showDirectoryPicker === "function") {
+          try {
+            const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+            if (handle && typeof handle.requestPermission === "function") {
+              const permission = await handle.requestPermission({ mode: "readwrite" });
+              if (permission !== "granted") throw new Error("没有写入该文件夹的权限");
+            }
+            exportDirHandle = handle;
+            exportDirPath = "";
+            updateExportDirControls();
+            setFileStatus("ok", "已选择导出文件夹", (handle && handle.name ? handle.name : "已选择") + "；导出将直接写入该文件夹。");
+            showToast("已选择导出文件夹", "ok");
+            return;
+          } catch (error) {
+            if (error && error.name === "AbortError") return;
+            // Figma 内嵌浏览器可能抛 SecurityError，继续走本机中继选择文件夹
+          }
+        }
+        if (!state.connected || !state.socket) {
+          setFileStatus("err", "需要先连接本地通道", "Figma 内置浏览器不支持目录选择；连接 3055 后可通过本机中继打开 Windows 文件夹选择框。");
+          return;
+        }
+        try {
+          setFileStatus("warn", "正在打开文件夹选择框", "请在弹出的中文窗口里输入或确认目录。");
+          const result = await callRelay("pick-export-folder", { initialPath: exportDirPath });
+          if (!result || result.cancelled || !result.path) {
+            setFileStatus("warn", "已取消选择文件夹", "仍会使用浏览器逐张下载。");
+            return;
+          }
+          exportDirHandle = null;
+          exportDirPath = result.path;
+          saveExportFolderPreference(exportDirPath);
+          updateExportDirControls();
+          setFileStatus("ok", "已选择导出文件夹", result.path + "；导出将直接写入该文件夹。");
+          showToast("已选择导出文件夹", "ok");
+        } catch (error) {
+          setFileStatus("err", "选择导出文件夹失败", error.message || String(error));
+          showToast("选择导出文件夹失败", "err");
+        }
+      }
+
+      async function applyExportDir() {
+        const path = exportDirInput.value.trim();
+        if (!path) {
+          clearExportDir();
+          return;
+        }
+        if (!state.connected || !state.socket) {
+          setFileStatus("err", "需要先连接本地通道", "手动修改路径后需要 3055 中继校验并记住目录。");
+          return;
+        }
+        try {
+          const result = await callRelay("set-export-folder", { path });
+          exportDirHandle = null;
+          exportDirPath = result.path || path;
+          saveExportFolderPreference(exportDirPath);
+          updateExportDirControls();
+          setFileStatus("ok", "已应用导出文件夹", exportDirPath);
+          showToast("导出文件夹已更新", "ok");
+        } catch (error) {
+          setFileStatus("err", "导出文件夹不可用", error.message || String(error));
+          showToast("导出文件夹不可用", "err");
+        }
+      }
+
+      function clearExportDir() {
+        exportDirHandle = null;
+        exportDirPath = "";
+        saveExportFolderPreference("");
+        if (state.connected && state.socket) callRelay("set-export-folder", { path: "" }).catch(() => {});
+        updateExportDirControls();
+        setFileStatus("warn", "已切回浏览器下载", "导出会逐张下载到浏览器默认下载目录。");
+        showToast("已切回浏览器下载", "warn");
+      }
+
+      async function exportBoards(scope) {
+        if (state.exportBusy) return;
+        const finishOperationTimer = startOperationTimer();
+        const format = exportFormat.value;
+        const ext = EXPORT_EXT[format] || "png";
+        const scale = Number(exportScale.value) || 1;
+        const quality = Number(exportQuality.value) || 92;
+        setExportBusy(true);
+        try {
+          setFileStatus("warn", "正在读取画板列表", scope === "selection" ? "按当前选择查找画板" : "按当前页查找全部画板");
+          const list = await callPlugin("list_export_targets", { scope });
+          const targets = (list && list.targets) || [];
+          if (!targets.length) {
+            throw new Error(scope === "selection" ? "当前没有选中可导出的画板" : "当前页没有可导出的画板");
+          }
+          const used = new Set();
+          const failures = [];
+          let exported = 0;
+          const pageName = (list && list.page) || "当前页";
+          exportTargetHint.textContent = pageName + "：共 " + targets.length + " 张画板，正在逐张导出。";
+          for (let i = 0; i < targets.length; i++) {
+            const target = targets[i];
+            setFileStatus("warn", "正在导出 " + (i + 1) + " / " + targets.length, target.name);
+            try {
+              const result = await callPlugin("export_node_as_image", {
+                nodeId: target.id,
+                format,
+                scale,
+                quality,
+              });
+              if (!result || !result.imageData) throw new Error("导出没有返回数据");
+              const name = makeUniqueName(target.name, ext, used);
+              await saveExportFile(name, result.mimeType || EXPORT_MIME[format], result.imageData);
+              exported++;
+            } catch (error) {
+              failures.push(target.name + "：" + (error.message || String(error)));
+            }
+            await new Promise((resolve) => setTimeout(resolve, 80));
+          }
+          if (failures.length) {
+            const destination = (exportDirHandle || exportDirPath) ? "。" : "；若只出现第一张，请允许此页面连续下载。";
+            setFileStatus(
+              "warn",
+              "导出完成，成功 " + exported + " 张，失败 " + failures.length + " 张",
+              failures.slice(0, 3).join("；") + destination
+            );
+            exportTargetHint.textContent = "最近一次成功 " + exported + " 张，失败 " + failures.length + " 张。";
+            showToast("导出完成：成功 " + exported + " 张，失败 " + failures.length + " 张", "warn");
+          } else {
+            setFileStatus(
+              "ok",
+              "已导出 " + exported + " 张画板",
+              (exportDirHandle || exportDirPath) ? "文件已写入导出文件夹。" : "文件已交给浏览器下载；若只出现第一张，请允许此页面连续下载。"
+            );
+            exportTargetHint.textContent = "最近一次导出了 " + exported + " 张画板。";
+            showToast("已导出 " + exported + " 张画板", "ok");
+          }
+        } catch (error) {
+          setFileStatus("err", "导出失败", error.message || String(error));
+          showToast("导出失败", "err");
+        } finally {
+          finishOperationTimer();
+          setExportBusy(false);
+        }
+      }
+
+      function readSvgFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(reader.error || new Error("读取文件失败"));
+          reader.readAsText(file);
+        });
+      }
+
+      async function importSelectedSvg() {
+        if (state.importBusy) return;
+        if (!selectedSvgText) {
+          setFileStatus("err", "请先选择 SVG 文件");
+          return;
+        }
+        state.importBusy = true;
+        importSvgButton.disabled = true;
+        const finishOperationTimer = startOperationTimer();
+        try {
+          setFileStatus("warn", "正在导入 SVG", selectedSvgName);
+          const result = await callPlugin("import_svg", {
+            svg: selectedSvgText,
+            name: selectedSvgName || "导入的 SVG",
+            scale: Number(svgScale.value) || 1,
+            asBoard: svgAsBoard.checked,
+            bindVariables: svgBind.checked,
+          });
+          setFileStatus(
+            "ok",
+            "SVG 导入完成",
+            "节点 " + result.id + " · " + result.width + " x " + result.height + " · 补绑 " + result.bound + " 处"
+          );
+          showToast("SVG 导入完成", "ok");
+        } catch (error) {
+          setFileStatus("err", "SVG 导入失败", error.message || String(error));
+          showToast("SVG 导入失败", "err");
+        } finally {
+          finishOperationTimer();
+          state.importBusy = false;
+          importSvgButton.disabled = !selectedSvgText;
+        }
+      }
+
+      function generateChannelName() {
+        const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+        for (let i = 0; i < 8; i++) result += characters.charAt(Math.floor(Math.random() * characters.length));
+        return result;
+      }
+
+      // ---------- 进度栏：常显，空闲时退回"当前没有任务"而不是整块隐藏 ----------
+      let progressTimer = null;
+      let operationTimer = null;
+
+      function startOperationTimer() {
+        const startedAt = Date.now();
+        clearInterval(operationTimer);
+        metaElapsed.textContent = "0 毫秒";
+        operationTimer = setInterval(() => {
+          metaElapsed.textContent = fmtMs(Date.now() - startedAt);
+        }, 250);
+        return () => {
+          clearInterval(operationTimer);
+          operationTimer = null;
+          const total = Date.now() - startedAt;
+          metaElapsed.textContent = fmtMs(total);
+          return total;
+        };
+      }
+
+      function elapsedOf(id) {
+        const meta = state.commandTracking.get(id) || state.commandTracking.get(state.activeRequestId);
+        return meta ? Date.now() - meta.startedAt : null;
+      }
+
+      function updateProgressUI(p) {
+        const progress = p.progress || 0;
+        progressBar.style.width = progress + "%";
+        dockLine.style.width = progress + "%";
+        progressPercentage.textContent = progress + "%";
+        progressMessage.textContent = p.message || "任务执行中";
+
+        const ms = elapsedOf(p.commandId);
+        if (ms != null) {
+          progressElapsed.textContent = "已用 " + fmtMs(ms);
+        }
+
+        if (p.status === "started") {
+          setDock("");
+          progressStatus.textContent = "开始";
+        } else if (p.status === "in_progress") {
+          setDock("");
+          progressStatus.textContent = p.totalItems ? "节点 " + (p.processedItems || 0) + " / " + p.totalItems : "进行中";
+        } else if (p.status === "completed") {
+          setDock("done");
+          progressStatus.textContent = "完成";
+          afterCommand("ok");
+          clearTimeout(progressTimer);
+          progressTimer = setTimeout(resetProgressUI, 6000);
+        } else if (p.status === "error") {
+          setDock("error");
+          progressStatus.textContent = "失败";
+          afterCommand("error");
+        }
+      }
+
+      function sendProgressUpdateToServer(progressData) {
+        if (!state.connected || !state.socket) return;
+        const requestId = state.activeRequestId || progressData.commandId;
+        state.socket.send(
+          JSON.stringify({
+            id: requestId,
+            type: "progress_update",
+            channel: state.channel,
+            message: { id: requestId, type: "progress_update", data: progressData },
+          })
+        );
+      }
+
+      function resetProgressUI() {
+        setDock("idle");
+        progressBar.style.width = "0";
+        dockLine.style.width = "0";
+        progressMessage.textContent = "当前没有任务";
+        progressStatus.textContent = "空闲";
+        progressElapsed.textContent = "";
+        progressPercentage.textContent = "0%";
+      }
+
+      // ---------- 折叠与宽度 ----------
+      const collapseButton = document.getElementById("btn-collapse");
+      const wideButton = document.getElementById("btn-wide");
+      let collapsed = false;
+      let wide = false;
+
+      function applyUiState(next) {
+        collapsed = !!next.collapsed;
+        wide = !!next.wide;
+        document.body.classList.toggle("collapsed", collapsed);
+        collapseButton.textContent = collapsed ? "展开" : "折叠";
+        wideButton.textContent = wide ? "标准" : "加宽";
+      }
+
+      function pushSize() {
+        parent.postMessage({ pluginMessage: { type: "set-size", collapsed: collapsed, wide: wide } }, "*");
+      }
+
+      collapseButton.addEventListener("click", () => {
+        collapsed = !collapsed;
+        applyUiState({ collapsed: collapsed, wide: wide });
+        pushSize();
+      });
+      wideButton.addEventListener("click", () => {
+        wide = !wide;
+        applyUiState({ collapsed: collapsed, wide: wide });
+        pushSize();
+      });
+
+      // ---------- 标签 ----------
+      const tabs = document.querySelectorAll(".tab");
+      const tabContents = document.querySelectorAll(".tab-content");
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          tabs.forEach((t) => t.setAttribute("aria-selected", "false"));
+          tabContents.forEach((c) => c.classList.remove("active"));
+          tab.setAttribute("aria-selected", "true");
+          state.activeTabId = tab.id;
+          document.getElementById("content-" + tab.id.split("-")[1]).classList.add("active");
+          updateDisconnectVisibility();
+        });
+      });
+
+      // ---------- 连接按钮 ----------
+      connectButton.addEventListener("click", () => {
+        if (state.connected) {
+          disconnectFromServer();
+        } else {
+          if (!validatePort()) return;
+          connectToServer(parseInt(portInput.value, 10) || 3055);
+        }
+      });
+
+      // ---------- 端口输入：校验 + 屏蔽滚轮步进 ----------
+      function validatePort() {
+        // 聚焦会先把输入框清空，编辑中允许为空，不在这里报错；
+        // 真正需要值的地方（连接、导出）都会在失焦还原之后再取值。
+        if (portInput.value.trim() === "") {
+          portInput.classList.remove("is-invalid");
+          portError.classList.remove("show");
+          return false;
+        }
+        const v = parseInt(portInput.value, 10);
+        const bad = !(v >= 1024 && v <= 65535);
+        portInput.classList.toggle("is-invalid", bad);
+        portError.classList.toggle("show", bad);
+        return !bad;
+      }
+      portInput.addEventListener("input", validatePort);
+      // 滚过输入框就静默改端口，是最难查的一类故障，直接拦掉
+      portInput.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          portInput.blur();
+        },
+        { passive: false }
+      );
+
+      // ---------- 数值输入框：点进去先清空，不改动就还原，改了则记住 ----------
+      // 之前有默认值时，想输入新数字得先手动删掉旧值。统一改成：聚焦时把当前值挪到
+      // 占位符并清空输入，直接敲就行；失焦时没输入东西就还原成原值；真改了则写进
+      // 插件存储，下次打开还是这个值。滚轮误改值也在这里一并拦掉。
+      const numberInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+
+      // 按 min / max 夹一下，并去掉浮点噪声（0.30000000000000004 这种）
+      function normalizeNumber(input, raw) {
+        const v = Number(String(raw).trim());
+        if (!Number.isFinite(v)) return null;
+        const min = input.min === "" ? -Infinity : Number(input.min);
+        const max = input.max === "" ? Infinity : Number(input.max);
+        let out = v;
+        if (Number.isFinite(min)) out = Math.max(min, out);
+        if (Number.isFinite(max)) out = Math.min(max, out);
+        return String(Math.round(out * 1e6) / 1e6);
+      }
+
+      function collectNumberPrefs() {
+        const prefs = {};
+        for (const input of numberInputs) {
+          if (input.id) prefs[input.id] = input.value;
+        }
+        return prefs;
+      }
+
+      function saveNumberPrefs() {
+        parent.postMessage(
+          { pluginMessage: { type: "save-number-prefs", prefs: collectNumberPrefs() } },
+          "*"
+        );
+      }
+
+      // 插件存储里读回来的记忆值：落到输入框，并同步成"当前生效值"
+      function applyNumberPrefs(prefs) {
+        if (!prefs) return;
+        for (const input of numberInputs) {
+          if (!input.id) continue;
+          const stored = prefs[input.id];
+          if (stored === undefined || stored === null || stored === "") continue;
+          const normalized = normalizeNumber(input, stored);
+          if (normalized === null) continue;
+          input.value = normalized;
+          input.dataset.saved = normalized;
+        }
+        validatePort();
+      }
+
+      for (const input of numberInputs) {
+        // dataset.saved 是"当前生效值"：失焦要还原到它，改动后也以它为准
+        input.dataset.saved = input.value;
+        let editing = false;
+
+        input.addEventListener("focus", () => {
+          if (editing) return;
+          editing = true;
+          const current = input.dataset.saved || input.value;
+          input.value = "";
+          input.placeholder = current;
+        });
+
+        input.addEventListener("blur", () => {
+          if (!editing) return;
+          editing = false;
+          input.placeholder = "";
+          const saved = input.dataset.saved || "";
+          const typed = input.value.trim();
+          const normalized = typed === "" ? null : normalizeNumber(input, typed);
+          if (normalized === null) {
+            // 没输入、或输入的不是有效数字：还原，不留下空框
+            input.value = saved;
+          } else {
+            input.value = normalized;
+            if (normalized !== saved) {
+              input.dataset.saved = normalized;
+              saveNumberPrefs();
+              input.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+          }
+          if (input === portInput) validatePort();
+        });
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            input.blur();
+          }
+        });
+
+        // 滚过输入框就静默改值，是最难查的一类故障，直接拦掉
+        input.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            input.blur();
+          },
+          { passive: false }
+        );
+      }
+
+      // ---------- 复制配置 ----------
+      document.getElementById("btn-copy").addEventListener("click", () => {
+        const textarea = document.getElementById("mcp-json");
+        textarea.select();
+        document.execCommand("copy");
+        const button = document.getElementById("btn-copy");
+        button.textContent = "已复制";
+        setTimeout(() => {
+          button.textContent = "复制";
+        }, 2000);
+      });
+
+      document.getElementById("mcp-client").addEventListener("change", updateMcpConfig);
+
+      // ---------- 文件页：导出画板与导入 SVG ----------
+      exportSelectedButton.addEventListener("click", () => exportBoards("selection"));
+      exportAllButton.addEventListener("click", () => exportBoards("page"));
+      exportFormat.addEventListener("change", updateExportControls);
+      chooseExportDirButton.addEventListener("click", chooseExportDir);
+      applyExportDirButton.addEventListener("click", applyExportDir);
+      exportDirInput.addEventListener("keydown", (event) => { if (event.key === "Enter") applyExportDir(); });
+      clearExportDirButton.addEventListener("click", clearExportDir);
+
+      function bindCardToggle(buttonId, bodyId) {
+        const button = document.getElementById(buttonId);
+        const body = document.getElementById(bodyId);
+        if (!button || !body) return;
+        button.addEventListener("click", () => {
+          const folded = body.classList.toggle("collapsed");
+          button.textContent = folded ? "展开" : "收起";
+        });
+      }
+      bindCardToggle("btn-toggle-export", "export-card-body");
+      bindCardToggle("btn-toggle-import", "import-card-body");
+      disconnectButton.addEventListener("click", disconnectFromServer);
+
+      function positionHintTip(icon) {
+        const tip = icon.querySelector(".hint-tip");
+        if (!tip) return;
+        const rect = icon.getBoundingClientRect();
+        const width = Math.min(240, window.innerWidth - 16);
+        const height = tip.offsetHeight || 80;
+        const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+        let top = rect.bottom + 8;
+        if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 8);
+        tip.style.width = width + "px";
+        tip.style.left = left + "px";
+        tip.style.top = top + "px";
+      }
+      document.querySelectorAll(".hint-icon").forEach((icon) => {
+        icon.addEventListener("mouseenter", () => positionHintTip(icon));
+        icon.addEventListener("focusin", () => positionHintTip(icon));
+      });
+      document.querySelector(".panel-body")?.addEventListener("scroll", () => {
+        document.querySelectorAll(".hint-icon:hover, .hint-icon:focus-visible").forEach(positionHintTip);
+      });
+      window.addEventListener("resize", () => {
+        document.querySelectorAll(".hint-icon:hover, .hint-icon:focus-visible").forEach(positionHintTip);
+      });
+
+      document.getElementById("btn-choose-svg").addEventListener("click", () => svgFileInput.click());
+      svgFileInput.addEventListener("change", async () => {
+        const file = svgFileInput.files && svgFileInput.files[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) {
+          selectedSvgText = "";
+          selectedSvgName = "";
+          importSvgButton.disabled = true;
+          importFileHint.textContent = "文件超过 10MB，先压缩或拆分。";
+          setFileStatus("err", "SVG 文件过大", "当前限制为 10MB 文本。");
+          svgFileInput.value = "";
+          return;
+        }
+        try {
+          selectedSvgText = await readSvgFile(file);
+          selectedSvgName = file.name.replace(/\.svg$/i, "");
+          importSvgButton.disabled = false;
+          importFileHint.textContent = "已选择 " + file.name + "，可以导入。";
+          setFileStatus("warn", "SVG 文件已就绪", file.name);
+        } catch (error) {
+          selectedSvgText = "";
+          selectedSvgName = "";
+          importSvgButton.disabled = true;
+          importFileHint.textContent = "读取失败。";
+          setFileStatus("err", "读取 SVG 失败", error.message || String(error));
+        }
+      });
+      importSvgButton.addEventListener("click", importSelectedSvg);
+
+      // 配置片段按本机这份改造版给，不再写上游的 bunx 包名
+      function updateMcpConfig() {
+        const client = document.getElementById("mcp-client").value;
+        const serverPath = "C:/Users/<你的用户名>/DesignTools/cursor-talk-to-figma-mcp/src/talk_to_figma_mcp/server.ts";
+        if (client === "codex") {
+          document.getElementById("mcp-json").value =
+            `[mcp_servers.talktofigma]\ncommand = "bun"\nargs = ["run", "${serverPath}"]\n`;
+          return;
+        }
+        const mcpConfig = {
+          mcpServers: {
+            talktofigma: {
+              command: "bun",
+              args: ["run", serverPath],
+            },
+          },
+        };
+        document.getElementById("mcp-json").value = JSON.stringify(mcpConfig, null, 2);
+      }
+
+      // ---------- 来自插件主线程的消息 ----------
+      window.onmessage = (event) => {
+        const message = event.data.pluginMessage;
+        if (!message) return;
+
+        switch (message.type) {
+          case "connection-status":
+            updateConnectionStatus(message.connected, message.message);
+            break;
+          case "ui-state":
+            applyUiState(message);
+            break;
+          case "export-folder-state":
+            exportDirPath = message.path || "";
+            exportDirHandle = null;
+            updateExportDirControls();
+            if (exportDirPath && state.connected) syncExportDirToRelay();
+            break;
+          case "auto-connect":
+            if (!state.connected) connectButton.click();
+            break;
+          case "auto-disconnect":
+            if (state.connected) connectButton.click();
+            break;
+          case "local-result": {
+            const pending = state.localRequests.get(message.id);
+            if (pending) {
+              state.localRequests.delete(message.id);
+              pending.resolve(message.result);
+            }
+            break;
+          }
+          case "local-error": {
+            const pending = state.localRequests.get(message.id);
+            if (pending) {
+              state.localRequests.delete(message.id);
+              pending.reject(new Error(message.error || "插件命令执行失败"));
+            }
+            break;
+          }
+          case "command-result": {
+            sendSuccessResponse(message.id, message.result);
+            const ms = elapsedOf(message.id);
+            if (ms != null) {
+              progressElapsed.textContent = fmtMs(ms);
+            }
+            const meta = state.commandTracking.get(message.id);
+            if (meta) state.commandTracking.delete(message.id);
+            afterCommand("ok");
+            break;
+          }
+          case "command-error": {
+            sendErrorResponse(message.id, message.error);
+            const meta = state.commandTracking.get(message.id);
+            if (meta) state.commandTracking.delete(message.id);
+            setDock("error");
+            progressStatus.textContent = "失败";
+            progressMessage.textContent = "失败：" + String(message.error || "").slice(0, 80);
+            afterCommand("error");
+            break;
+          }
+          case "command_progress":
+            updateProgressUI(message);
+            sendProgressUpdateToServer(message);
+            break;
+          case "init-settings":
+            if (message.settings && message.settings.serverPort) {
+              portInput.value = message.settings.serverPort;
+              portInput.dataset.saved = String(message.settings.serverPort);
+              state.serverPort = message.settings.serverPort;
+              validatePort();
+              metaPort.textContent = String(message.settings.serverPort);
+            }
+            // 端口、导出倍率、JPG 画质、SVG 倍率的记忆值
+            applyNumberPrefs(message.numberPrefs);
+            break;
+        }
+      };
+
+      // 主动拉一次设置：插件的首次推送有可能早于我们挂上监听，丢了就永远拿不到
+      parent.postMessage({ pluginMessage: { type: "get-settings" } }, "*");
+      updateMcpConfig();
+      updateExportControls();
+      updateExportDirControls();
+      resetProgressUI();
+      validatePort();
+    </script>
+  </body>
+</html>

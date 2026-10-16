@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Figma 通道控制台</title>
+<style>
+  :root {
+    --bg-canvas: #17181b;
+    --bg-surface: #1f2126;
+    --bg-surface-2: #262930;
+    --bg-hover: #2b2f37;
+    --line-hairline: #33373f;
+    --line-strong: #454b56;
+    --text-1: #eaecf0;
+    --text-2: #b6bcc8;
+    --text-3: #8c93a1;
+    --accent: #18a0fb;
+    --accent-text: #46b8ff;
+    --ok: #4ade80;
+    --ok-bg: #12301f;
+    --warn: #f5b544;
+    --warn-bg: #33260d;
+    --err: #ff8f8f;
+    --err-bg: #35161a;
+    --idle: #b6bcc8;
+    --idle-bg: #262930;
+    --shadow-rgb: 0, 0, 0;
+
+    --font-ui: "Microsoft YaHei", "Noto Sans SC", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "Consolas", "JetBrains Mono", "SFMono-Regular", monospace;
+
+    --t-2xs: 11px; --lh-2xs: 16px;
+    --t-xs: 12px;  --lh-xs: 18px;
+    --t-sm: 13px;  --lh-sm: 20px;
+    --t-md: 14px;  --lh-md: 20px;
+    --t-lg: 15px;  --lh-lg: 22px;
+    --t-xl: 19px;  --lh-xl: 26px;
+    --w-400: 400; --w-500: 500; --w-600: 600;
+
+    --s-1: 2px; --s-2: 4px; --s-3: 8px; --s-4: 12px;
+    --s-5: 16px; --s-6: 20px; --s-7: 24px; --s-8: 32px;
+
+    --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-pill: 999px;
+    --bd-w-1: 1px; --bd-w-2: 2px;
+    --bd-hairline: var(--bd-w-1) solid var(--line-hairline);
+    --sh-1: 0 1px 2px rgba(var(--shadow-rgb), .35);
+
+    --h-pill: 22px; --h-btn-sm: 26px; --h-track: 6px; --sz-dot: 6px; --hit-min: 28px;
+    --h-log: 320px; --w-lv: 5ch; --minw-card: 230px; --ring-1: 2px; --ring-2: 4px;
+    --maxw: 1180px;
+    --d-1: 120ms; --d-2: 180ms; --ease-std: cubic-bezier(.2, .7, .3, 1);
+    --tr-color: color var(--d-1) var(--ease-std), background-color var(--d-1) var(--ease-std), border-color var(--d-1) var(--ease-std);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: var(--s-7) var(--s-6) var(--s-8);
+    background: var(--bg-canvas); color: var(--text-1);
+    font-family: var(--font-ui); font-size: var(--t-sm); line-height: var(--lh-sm);
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-5); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-4); flex-wrap: wrap; }
+  .title { font-size: var(--t-xl); line-height: var(--lh-xl); font-weight: var(--w-600); }
+  .subtitle { font-size: var(--t-xs); color: var(--text-2); }
+  .top-actions { display: flex; align-items: center; gap: var(--s-3); }
+
+  .pill {
+    height: var(--h-pill); padding: 0 var(--s-3);
+    display: inline-flex; align-items: center; gap: var(--s-2);
+    border-radius: var(--r-pill);
+    font-size: var(--t-2xs); line-height: var(--lh-2xs); font-weight: var(--w-500);
+    white-space: nowrap;
+  }
+  .dot { width: var(--sz-dot); height: var(--sz-dot); border-radius: var(--r-pill); flex: none; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.ok .dot { background: var(--ok); }
+  .pill.err { background: var(--err-bg); color: var(--err); } .pill.err .dot { background: var(--err); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); } .pill.warn .dot { background: var(--warn); }
+  .pill.idle { background: var(--idle-bg); color: var(--text-2); } .pill.idle .dot { background: var(--idle); }
+
+  .btn {
+    height: var(--h-btn-sm); padding: 0 var(--s-3);
+    display: inline-flex; align-items: center; gap: var(--s-2);
+    font-family: var(--font-ui); font-size: var(--t-2xs); font-weight: var(--w-600);
+    color: var(--text-2); background: transparent; border: var(--bd-hairline);
+    border-radius: var(--r-sm); cursor: pointer; transition: var(--tr-color);
+  }
+  .btn:hover { background: var(--bg-hover); color: var(--text-1); }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 var(--ring-1) var(--bg-canvas), 0 0 0 var(--ring-2) var(--accent); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--minw-card), 1fr)); gap: var(--s-4); }
+  .card {
+    background: var(--bg-surface); border: var(--bd-hairline); border-radius: var(--r-md);
+    box-shadow: var(--sh-1); padding: var(--s-5);
+    display: flex; flex-direction: column; gap: var(--s-3);
+  }
+  .card h2 { margin: 0; font-size: var(--t-md); line-height: var(--lh-md); font-weight: var(--w-600); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: var(--s-2) var(--s-3); align-items: baseline; }
+  .k { font-size: var(--t-xs); color: var(--text-3); }
+  .v { font-size: var(--t-sm); color: var(--text-1); justify-self: end; font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--font-mono); font-size: var(--t-xs); }
+
+  table { width: 100%; border-collapse: collapse; font-size: var(--t-xs); }
+  th { text-align: left; color: var(--text-3); font-weight: var(--w-500); padding: var(--s-2) var(--s-3); border-bottom: var(--bd-hairline); }
+  td { padding: var(--s-2) var(--s-3); border-bottom: var(--bd-hairline); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+  .track { width: 100%; height: var(--h-track); background: var(--bg-surface-2); border-radius: var(--r-pill); overflow: hidden; }
+  .fill { height: var(--h-track); background: var(--accent); border-radius: var(--r-pill); transition: width var(--d-2) var(--ease-std); }
+  .fill.ok { background: var(--ok); } .fill.err { background: var(--err); }
+
+  .log {
+    background: var(--bg-surface-2); border-radius: var(--r-xs); padding: var(--s-4);
+    height: var(--h-log); overflow: auto; font-family: var(--font-mono); font-size: var(--t-xs); line-height: var(--lh-xs);
+  }
+  .log .row { display: flex; gap: var(--s-3); }
+  .log .ts { color: var(--text-3); flex: none; }
+  .log .lv { flex: none; width: var(--w-lv); }
+  /* 级别一律带 lv- 前缀：日志级别里有个值就叫 log，直接当类名会命中外层容器 .log，
+     于是每一行自己变成 320 高的滚动盒，看起来就是文字被竖排 */
+  .log .lv-warn { color: var(--warn); } .log .lv-error { color: var(--err); } .log .lv-info { color: var(--accent-text); }
+  /* 换行开：长文按容器宽度折行。换行关：整行按内容撑开，交给横向滚动条看全。
+     不能用 word-break: break-all —— 那会让 flex 项的最小内容宽度缩到约一个字，整行被压成竖排 */
+  .log.is-wrap .tx { color: var(--text-1); flex: 1 1 auto; min-width: 0; white-space: pre-wrap; overflow-wrap: break-word; }
+  .log:not(.is-wrap) .row { width: max-content; min-width: 100%; }
+  .log:not(.is-wrap) .tx { color: var(--text-1); flex: none; white-space: pre; }
+
+  .hint { font-size: var(--t-xs); color: var(--text-3); }
+  .grp { font-size: var(--t-xs); color: var(--text-3); margin: var(--s-2) 0 var(--s-1); }
+  .grp:first-of-type { margin-top: 0; }
+  .svc-link { color: var(--accent); text-decoration: none; }
+  .svc-link:hover { text-decoration: underline; }
+  .sec-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div>
+      <div class="title">Figma 通道控制台</div>
+      <div class="subtitle">中继进程自带，不额外占端口。数据来自 <span class="mono">/status</span> 与 <span class="mono">/logs</span>，每 1.5 秒刷新一次。</div>
+    </div>
+    <div class="top-actions">
+      <span class="pill idle" id="relay-pill"><i class="dot"></i><span id="relay-text">连接中</span></span>
+      <button class="btn" id="btn-pause">暂停刷新</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>本地通道</h2>
+      <div class="kv">
+        <span class="k">端口</span><span class="v mono">3055</span>
+        <span class="k">运行时长</span><span class="v" id="relay-uptime">-</span>
+        <span class="k">已连接客户端</span><span class="v" id="relay-clients">-</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Figma 插件</h2>
+      <div class="kv">
+        <span class="k">状态</span><span class="v" id="plugin-state">-</span>
+        <span class="k">最后活动</span><span class="v" id="plugin-seen">-</span>
+        <span class="k">构建号</span><span class="v mono" id="plugin-build">-</span>
+      </div>
+      <div class="hint">插件不自动重连：中继重启后，要在 Figma 里把插件关掉重开一次。构建号要和前置流程页期望值一致才允许推图。</div>
+    </div>
+    <div class="card">
+      <h2>推送任务</h2>
+      <div class="kv">
+        <span class="k">批次</span><span class="v" id="batch-text">-</span>
+        <span class="k">当前页</span><span class="v" id="page-text">-</span>
+        <span class="k">页状态</span><span class="v" id="page-state">-</span>
+      </div>
+      <div class="track"><div class="fill" id="batch-fill" style="width:0"></div></div>
+    </div>
+    <div class="card">
+      <h2>周边服务</h2>
+      <p class="grp">附属服务（随通道启停）</p>
+      <div class="kv">
+        <span class="k">抽取收集 8768</span><span class="v" id="svc-8768">-</span>
+      </div>
+      <p class="grp">宿主与按需</p>
+      <div class="kv">
+        <span class="k"><a class="svc-link" href="http://127.0.0.1:8790/flow-page">总控台 8790 · 前置流程页</a></span><span class="v" id="svc-8790">-</span>
+        <span class="k">原型静态站 8767（未登记，按需自建）</span><span class="v" id="svc-8767">-</span>
+      </div>
+      <div class="hint">只能测"连得上连不上"（跨源读不到内容），不代表服务健康。前置流程页是这条管线的七步检查，推图前看它。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-head"><h2>连接的客户端</h2><span class="hint">工具名来自 MCP 握手的 clientInfo，握手前只显示进程号；构建号由插件在 hello 消息里上报</span></div>
+    <table>
+      <thead><tr><th>角色</th><th>工具</th><th>进程号</th><th>频道</th><th>构建号</th><th>最近命令</th><th class="num">最后活动</th></tr></thead>
+      <tbody id="clients-body"><tr><td colspan="7" class="hint">还没有客户端连上</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="sec-head"><h2>实时进度</h2><span class="hint">来自插件广播的 progress_update</span></div>
+    <div class="kv" id="prog-kv"><span class="k">状态</span><span class="v">空闲</span></div>
+    <div class="track"><div class="fill" id="prog-fill" style="width:0"></div></div>
+    <table>
+      <thead><tr><th>时间</th><th>类型</th><th>来源</th><th>内容</th><th class="num">耗时</th></tr></thead>
+      <tbody id="events-body"><tr><td colspan="5" class="hint">暂无事件</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="sec-head">
+      <h2>运行日志</h2>
+      <div class="top-actions">
+        <span class="hint">与中继那个命令行窗口同源，单条超过 600 字会截断</span>
+        <button class="btn" id="btn-wrap">自动换行：开</button>
+      </div>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var paused = false, lastLog = 0, ticks = 0;
+  var WRAP_KEY = "console-log-wrap";
+  var wrapOn = true;
+  try { wrapOn = localStorage.getItem(WRAP_KEY) !== "0"; } catch (e) {}
+  var el = function (id) { return document.getElementById(id); };
+  var fmtAgo = function (ms) {
+    if (ms == null) return "-";
+    var s = Math.max(0, Math.round(ms / 1000));
+    if (s < 60) return s + " 秒前";
+    if (s < 3600) return Math.round(s / 60) + " 分钟前";
+    return Math.round(s / 3600) + " 小时前";
+  };
+  var fmtDur = function (ms) {
+    if (ms == null) return "-";
+    if (ms < 1000) return ms + " 毫秒";
+    if (ms < 60000) return (ms / 1000).toFixed(2) + " 秒";
+    return Math.floor(ms / 60000) + " 分 " + Math.round((ms % 60000) / 1000) + " 秒";
+  };
+  var fmtClock = function (ts) {
+    var d = new Date(ts);
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  };
+  var setPill = function (pill, text, cls) {
+    pill.className = "pill " + cls;
+    el(text).textContent = el(text).dataset.label || el(text).textContent;
+  };
+
+  function applyWrap() {
+    el("log").classList.toggle("is-wrap", wrapOn);
+    el("btn-wrap").textContent = "自动换行：" + (wrapOn ? "开" : "关");
+  }
+  el("btn-wrap").addEventListener("click", function () {
+    wrapOn = !wrapOn;
+    try { localStorage.setItem(WRAP_KEY, wrapOn ? "1" : "0"); } catch (e) {}
+    applyWrap();
+  });
+  applyWrap();
+
+  el("btn-pause").addEventListener("click", function () {
+    paused = !paused;
+    el("btn-pause").textContent = paused ? "继续刷新" : "暂停刷新";
+  });
+
+  function probeService(port, slot) {
+    fetch("http://127.0.0.1:" + port + "/?ping=" + Date.now(), { mode: "no-cors", cache: "no-store" })
+      .then(function () { slot.textContent = "可连通"; slot.style.color = "var(--ok)"; })
+      .catch(function () { slot.textContent = "未启动"; slot.style.color = "var(--text-3)"; });
+  }
+
+  function renderStatus(s) {
+    var relayPill = el("relay-pill");
+    relayPill.className = "pill ok";
+    el("relay-text").textContent = "通道正常";
+    el("relay-uptime").textContent = fmtDur(s.relay.uptimeMs);
+    el("relay-clients").textContent = s.relay.clients;
+
+    // 客户端清单直接读 allClients：没加入频道的客户端也能看到，比如刚握完手的 MCP
+    var all = s.allClients || [];
+    var plugin = null;
+    all.forEach(function (x) { if (x.role === "plugin") plugin = x; });
+    el("plugin-state").textContent = s.relay.pluginOnline ? "已连接" : "未连接";
+    el("plugin-state").style.color = s.relay.pluginOnline ? "var(--ok)" : "var(--err)";
+    el("plugin-seen").textContent = plugin ? fmtAgo((plugin.now || Date.now()) - plugin.lastSeen) : "-";
+    el("plugin-build").textContent = plugin && plugin.build ? plugin.build : "未上报";
+
+    var rows = all.map(function (x) {
+      var roleText = x.role === "plugin" ? "Figma 插件" : x.role === "mcp" ? "MCP 服务" : x.role || "?";
+      var toolName = x.role === "mcp" ? (x.client || x.name || "握手中") : (x.name || "—");
+      return (
+        "<tr><td>" + roleText + "</td>" +
+        "<td class='mono'>" + toolName + "</td>" +
+        "<td class='num'>" + (x.pid || "—") + "</td>" +
+        "<td class='mono'>" + (x.channel || "—") + "</td>" +
+        "<td class='mono'>" + (x.build || (x.role === "plugin" ? "未上报" : "—")) + "</td>" +
+        "<td class='mono'>" + (x.lastCommand || "—") + "</td>" +
+        "<td class='num'>" + fmtAgo((x.now || Date.now()) - x.lastSeen) + "</td></tr>"
+      );
+    });
+    el("clients-body").innerHTML = rows.length ? rows.join("") : "<tr><td colspan='7' class='hint'>还没有客户端连上</td></tr>";
+
+    var b = s.push && s.push.batch, p = s.push && s.push.page;
+    if (b) {
+      el("batch-text").textContent = "第 " + (b.index || 0) + " / 共 " + (b.total || 0) + " 页";
+      var pct = b.total ? Math.round(((b.index || 0) / b.total) * 100) : 0;
+      var bf = el("batch-fill");
+      bf.style.width = pct + "%";
+      bf.className = "fill" + (b.finishedAt ? " ok" : "");
+    } else {
+      el("batch-text").textContent = "无批次（单页推送）";
+      el("batch-fill").style.width = "0";
+    }
+    el("page-text").textContent = p && p.name ? p.name : "-";
+    var map = { running: "写入中", done: "已确认", unverified: "未确认", failed: "失败" };
+    el("page-state").textContent = p ? (map[p.status] || p.status || "-") + (p.elapsedMs ? " · " + fmtDur(p.elapsedMs) : "") : "-";
+
+    var prog = null;
+    Object.keys(s.progress || {}).forEach(function (k) { prog = s.progress[k]; });
+    var kv = el("prog-kv");
+    var pf = el("prog-fill");
+    if (prog && prog.commandType) {
+      kv.innerHTML =
+        "<span class='k'>命令</span><span class='v mono'>" + prog.commandType + "</span>" +
+        "<span class='k'>状态</span><span class='v'>" + (prog.status || "-") + "</span>" +
+        "<span class='k'>进度</span><span class='v'>" + (prog.progress || 0) + "%</span>" +
+        "<span class='k'>说明</span><span class='v'>" + (prog.message || "-") + "</span>" +
+        (prog.totalItems ? "<span class='k'>计数</span><span class='v'>" + (prog.processedItems || 0) + " / " + prog.totalItems + "</span>" : "");
+      pf.style.width = (prog.progress || 0) + "%";
+      pf.className = "fill" + (prog.status === "error" ? " err" : prog.status === "completed" ? " ok" : "");
+    } else {
+      kv.innerHTML = "<span class='k'>状态</span><span class='v'>空闲</span>";
+      pf.style.width = "0"; pf.className = "fill";
+    }
+
+    var ev = (s.events || []).slice(0, 12).map(function (e) {
+      return "<tr><td class='num'>" + fmtClock(e.ts) + "</td><td>" + e.kind + "</td><td class='mono'>" + (e.client || "-") +
+             "</td><td class='mono'>" + (e.detail || "") + "</td><td class='num'>" + (e.ms != null ? fmtDur(e.ms) : "") + "</td></tr>";
+    });
+    el("events-body").innerHTML = ev.length ? ev.join("") : "<tr><td colspan='5' class='hint'>暂无事件</td></tr>";
+  }
+
+  function appendLogs(rows) {
+    if (!rows || !rows.length) return;
+    var box = el("log");
+    var stick = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    var html = rows.map(function (l) {
+      return "<div class='row'><span class='ts'>" + fmtClock(l.ts) + "</span><span class='lv lv-" + l.level + "'>" + l.level +
+             "</span><span class='tx'>" + (l.text || "").replace(/[<&]/g, function (c) { return c === "<" ? "&lt;" : "&amp;"; }) + "</span></div>";
+    }).join("");
+    box.insertAdjacentHTML("beforeend", html);
+    while (box.childElementCount > 500) box.removeChild(box.firstElementChild);
+    if (stick) box.scrollTop = box.scrollHeight;
+  }
+
+  async function tick() {
+    if (paused) return;
+    ticks++;
+    try {
+      var s = await (await fetch("/status", { cache: "no-store" })).json();
+      renderStatus(s);
+      var l = await (await fetch("/logs?after=" + lastLog, { cache: "no-store" })).json();
+      if (l.rows && l.rows.length) { lastLog = l.last; appendLogs(l.rows); }
+      el("relay-pill").className = "pill ok";
+    } catch (e) {
+      el("relay-pill").className = "pill err";
+      el("relay-text").textContent = "通道读不到";
+    }
+    if (ticks % 4 === 0) { probeService(8768, el("svc-8768")); probeService(8767, el("svc-8767")); probeService(8790, el("svc-8790")); }
+  }
+
+  setInterval(tick, 1500);
+  tick();
+})();
+</script>
+</body>
+</html>

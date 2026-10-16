@@ -1,0 +1,5 @@
+node_modules/
+.cursor/
+.env
+# 上游这份文件原本还排除 dist/ 与 docs/，但本仓库里 dist/server.cjs 是 MCP 的入口
+#（AI 侧的工具清单就从它读出来），必须跟踪，所以这两条不要恢复。

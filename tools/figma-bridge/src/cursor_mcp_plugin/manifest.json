@@ -1,0 +1,23 @@
+{
+  "name": "Cursor MCP Plugin",
+  "id": "1485687494525374295",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "permissions": [],
+  "networkAccess": {
+    "allowedDomains": [
+      "ws://localhost:3055"
+    ],
+    "reasoning": "只连本机的 TalkToFigma 中继（ws://localhost:3055），不外发任何数据。",
+    "devAllowedDomains": [
+      "http://localhost:3055",
+      "ws://localhost:3055"
+    ]
+  },
+  "documentAccess": "dynamic-page"
+}
