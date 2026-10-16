@@ -9,6 +9,8 @@
 
 ![管线示意图：浏览器抽取页面树落盘，脚本经 MCP 服务与中继把画板建进 Figma](assets/pipeline.svg)
 
+交互版（能聚焦节点、看上下游、导出图片）：[pipeline.html](https://zhuweib-design.github.io/talk-to-figma-mcp/pipeline.html)。这是一份自包含的静态页面，不联网也不读写浏览器存储；要先在仓库 Settings → Pages 把 Source 设为 `main` + `Root`，没开启时这个地址会 404。
+
 本仓库 fork 自 [grab/cursor-talk-to-figma-mcp](https://github.com/grab/cursor-talk-to-figma-mcp)（commit `ddd90f3`）。
 上游完整用法见 [tools/figma-bridge/README.md](tools/figma-bridge/README.md)。
 
