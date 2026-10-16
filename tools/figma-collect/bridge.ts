@@ -1,12 +1,13 @@
 // 复用的 TalkToFigma 通道客户端：起一个 MCP 服务进程，加入频道后按名字调用工具。
 // 变量同步器和页面构建器都走这里，避免每个脚本各自实现一遍握手。
 import { spawn } from "child_process";
+import { join } from "path";
 
-const REPO =
-  process.env.FIGMA_MCP_REPO || "C:/Users/<你的用户名>/DesignTools/cursor-talk-to-figma-mcp";
-const BUN =
-  process.env.BUN_PATH ||
-  "C:/Users/<你的用户名>/AppData/Roaming/npm/node_modules/bun/bin/bun.exe";
+// 默认按仓库布局找 figma-bridge（figma-collect 的同级目录），clone 下来不用改；
+// 目录结构不一样时用 FIGMA_MCP_REPO 覆盖。
+const REPO = process.env.FIGMA_MCP_REPO || join(import.meta.dir, "..", "figma-bridge");
+// bun 在 PATH 上就直接用；不在就设 BUN_PATH 指到绝对路径
+const BUN = process.env.BUN_PATH || "bun";
 const SERVER = `${REPO}/src/talk_to_figma_mcp/server.ts`;
 
 export type FigmaBridge = {

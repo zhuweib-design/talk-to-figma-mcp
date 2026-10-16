@@ -1,5 +1,5 @@
 // 本地收集服务：向浏览器提供抽取脚本，并把抽取结果落盘。
-// 用法：bun collect-server.ts [--port 8768] [--pages-dir pages-gas] [--out 单页文件] [单页输出文件]
+// 用法：bun collect-server.ts [--port 8768] [--pages-dir pages] [--out 单页文件] [单页输出文件]
 // 带 source 字段的请求（浏览器抽到的页面名）会另外写一份 pages/<source>.json，
 // 这样批量抽取时一个页面的结果不会被下一个页面覆盖。
 // 端口与落盘目录都能从命令行给，是因为工具集合总控台启动条目时不能设环境变量，
@@ -89,4 +89,4 @@ Bun.serve({
 console.log(
   `收集服务已启动: http://127.0.0.1:${PORT}  单页输出: ${OUT}  分页目录: ${DIR}`
 );
-console.log("提示：浏览器里要把 __FIGMA_COLLECT 设成这个地址，换项目时 --pages-dir 要和 build-page 的 --dir 对得上");
+console.log("提示：浏览器里要把 __FIGMA_ENDPOINT 设成这个地址，换项目时 --pages-dir 要和 build-page 的 --dir 对得上");

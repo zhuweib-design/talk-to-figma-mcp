@@ -1,6 +1,6 @@
 // 本地体检：找出"文字宽度接近父内容盒"的节点，也就是 Figma 里可能被苹方顶出容器的文字。
 // 插件端的兜底（先压字距、再缩字号）只登记宽度 >= 父内容盒 97% 的节点，这里把阈值降下来看漏网之鱼。
-// 用法：bun audit-text-overflow.ts [--dir pages-gas] [--ratio 0.97] [--top 20]
+// 用法：bun audit-text-overflow.ts [--dir pages] [--ratio 0.97] [--top 20]
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
@@ -9,7 +9,7 @@ const flag = (name: string, fallback: string) => {
   const i = argv.indexOf(`--${name}`);
   return i >= 0 && argv[i + 1] ? argv[i + 1] : fallback;
 };
-const DIR = flag("dir", "pages-gas");
+const DIR = flag("dir", "pages");
 const RATIO = Number(flag("ratio", "0.97"));
 const TOP = Number(flag("top", "20"));
 

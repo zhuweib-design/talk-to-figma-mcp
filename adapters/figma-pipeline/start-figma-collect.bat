@@ -21,6 +21,6 @@ set COLLECT_PORT=%~1
 if "%COLLECT_PORT%"=="" set COLLECT_PORT=8768
 
 rem collect-server.ts �������뻷���������ϣ�������·�������������ֲ�
-set PAGES_DIR=pages-gas
-echo �����ռ����񣺶˿� %COLLECT_PORT%������Ŀ¼ pages-gas
-"%BUNEXE%" collect-server.ts --port %COLLECT_PORT% --pages-dir pages-gas
+set PAGES_DIR=pages
+echo �����ռ����񣺶˿� %COLLECT_PORT%������Ŀ¼ pages
+"%BUNEXE%" collect-server.ts --port %COLLECT_PORT% --pages-dir pages

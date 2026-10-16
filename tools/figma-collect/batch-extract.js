@@ -4,7 +4,8 @@
 // 每页结果由收集服务落成 pages/<页面名>.json，不会被下一页覆盖。
 (function () {
   // 多项目并行时给每个项目一个收集服务端口，落盘目录互不覆盖
-  const COLLECT = window.__FIGMA_COLLECT || "http://127.0.0.1:8766/";
+  // 服务地址统一用 __FIGMA_ENDPOINT（与 extractor.js 同名）；__FIGMA_COLLECT 是旧名，留着不让老手册断。
+  const COLLECT = window.__FIGMA_ENDPOINT || window.__FIGMA_COLLECT || "http://127.0.0.1:8766/";
 
   async function extractorCode() {
     const r = await fetch(`${COLLECT}extractor.js?r=${Date.now()}`);

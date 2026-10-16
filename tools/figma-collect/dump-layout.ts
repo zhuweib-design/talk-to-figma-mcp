@@ -1,7 +1,7 @@
 // 把指定页面里命中关键字的容器原样打出来：布局方向、间距、两端对齐、子节点实测排布，
 // 用来回答"这块空白到底是容器被撑高了，还是两端对齐把多余空间摊进了间距"。
-// 用法：bun dump-layout.ts --dir pages-gas --page 通知记录 --match card
-//       bun dump-layout.ts --dir pages-gas --page 异常识别 --match app-shell --kids
+// 用法：bun dump-layout.ts --dir pages --page 通知记录 --match card
+//       bun dump-layout.ts --dir pages --page 异常识别 --match app-shell --kids
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 

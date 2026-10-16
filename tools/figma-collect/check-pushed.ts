@@ -1,5 +1,5 @@
 // 对账：本地抽好的页面 vs 画布上实际画板，列出"没推 / 推的是旧数据（高度对不上）"的页面。
-// 用法：bun check-pushed.ts [--dir pages-gas] [--channel powerplant] [--out 待推清单.txt]
+// 用法：bun check-pushed.ts [--dir pages] [--channel powerplant] [--out 待推清单.txt]
 // 批次中途断连、失败重试、只推了部分页之后要收尾，都靠这个把差额找出来，不用翻日志。
 import { readdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";

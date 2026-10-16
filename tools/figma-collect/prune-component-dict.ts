@@ -1,5 +1,5 @@
 // 按项目组件库清理跨页签名字典：只保留指定 libraryName 下实际存在的组件名。
-// 用法：bun prune-component-dict.ts [--dir pages-gas] [--library "组件库"] [--channel powerplant]
+// 用法：bun prune-component-dict.ts [--dir pages] [--library "组件库"] [--channel powerplant]
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 import { openFigma } from "./bridge.ts";
@@ -9,7 +9,7 @@ const flag = (name: string, fallback = "") => {
   const i = argv.indexOf(`--${name}`);
   return i >= 0 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : fallback;
 };
-const DIR = flag("dir", "pages-gas");
+const DIR = flag("dir", "pages");
 const LIBRARY = flag("library", "组件库");
 const CHANNEL = flag("channel", "powerplant");
 const file = join(DIR, "components.json");

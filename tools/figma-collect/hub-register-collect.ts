@@ -24,7 +24,7 @@ const entry = {
   id: "figma-collect",
   name: "Figma 抽取收集服务",
   description:
-    "HTML 原型转 Figma 画板的中间一环：给浏览器提供 extractor.js 与 batch-extract.js，并把抽到的页面树按页面名落成 pages-gas/<页面名>.json。推图之前先起它，再起原型静态站。",
+    "HTML 原型转 Figma 画板的中间一环：给浏览器提供 extractor.js 与 batch-extract.js，并把抽到的页面树按页面名落成 pages/<页面名>.json。推图之前先起它，再起原型静态站。",
   kind: "web",
   dir: "C:\\Users\\<你的用户名>\\DesignTools\\figma-mcp",
   launch: [
@@ -33,7 +33,7 @@ const entry = {
     "--port",
     "{port}",
     "--pages-dir",
-    "pages-gas",
+    "pages",
   ],
   url: "http://127.0.0.1:{port}/",
   port: 8768,

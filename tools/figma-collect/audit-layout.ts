@@ -1,5 +1,5 @@
 // 画板版面体检：找出"画板比内容高出一截"和"容器被撑高后把多余空间摊进间距"的页面。
-// 用法：bun audit-layout.ts [--dir pages-gas] [--tail 60] [--gap 40] [--top 15] [--like 通知记录,异常识别]
+// 用法：bun audit-layout.ts [--dir pages] [--tail 60] [--gap 40] [--top 15] [--like 通知记录,异常识别]
 // 只做本地数据分析，不连 Figma，改抽取器前后都可以反复跑。
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
