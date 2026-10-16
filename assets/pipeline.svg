@@ -27,9 +27,9 @@
   <text x="618" y="98" class="s">页面树，一行一个页面</text>
 
   <path d="M230 83 H296" marker-end="url(#a)" />
-  <text x="236" y="72" class="lbl">注入 extractor.js</text>
+  <text x="216" y="130" class="lbl">注入 extractor.js / batch-extract.js</text>
   <path d="M530 83 H596" marker-end="url(#a)" />
-  <text x="536" y="72" class="lbl">回传落盘</text>
+  <text x="536" y="130" class="lbl">回传落盘</text>
 
   <text x="40" y="168" class="t">② 推送与核对：脚本经中继把画板建进 Figma</text>
 
@@ -50,11 +50,11 @@
   <text x="728" y="232" class="s">开发版 link，画布落地</text>
 
   <path d="M190 217 H236" marker-end="url(#a)" />
-  <text x="196" y="207" class="lbl">stdio</text>
+  <text x="196" y="266" class="lbl">stdio</text>
   <path d="M390 217 H436" marker-end="url(#a)" />
-  <text x="396" y="207" class="lbl">WebSocket</text>
+  <text x="392" y="266" class="lbl">WebSocket</text>
   <path d="M660 217 H706" marker-end="url(#a)" />
-  <text x="662" y="207" class="lbl">同频道广播</text>
+  <text x="650" y="266" class="lbl">同频道广播</text>
 
   <path d="M715 114 V150 H470 V182" class="dash" marker-end="url(#a)" />
   <text x="478" y="144" class="lbl">build-page.ts / build-batch.ts 读页面树，经 MCP 与中继建画板</text>
