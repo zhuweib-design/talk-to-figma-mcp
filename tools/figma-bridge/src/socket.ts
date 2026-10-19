@@ -184,9 +184,11 @@ function note(id: number, patch: Partial<ClientInfo>) {
   Object.assign(c, patch, { lastSeen: Date.now() });
 }
 
-// 推送脚本落盘的批次状态（build-page / build-batch 写的）
+// 推送脚本落盘的批次状态（build-page / build-batch 写的）。
+// 必须按仓库布局解析到同级的 figma-collect：早先这里写死过一个旧目录名，目录一改就找不到文件，
+// 而下面 readPushState 的写法是"文件不存在就返回 null"，于是控制台的批次块会静默空着、不报任何错。
 const PUSH_STATE =
-  process.env.PUSH_STATE || join(import.meta.dir, "..", "..", "figma-mcp", "push-state.json");
+  process.env.PUSH_STATE || join(import.meta.dir, "..", "..", "figma-collect", "push-state.json");
 
 function readPushState() {
   try {
@@ -269,6 +271,8 @@ function handleConnection(ws: ServerWebSocket<any>) {
 }
 
 const server = Bun.serve({
+  // 只绑回环。不写 hostname 时 Bun 默认监听所有网卡，同网段任意机器都能连上这条通道给画布下命令。
+  hostname: "127.0.0.1",
   port: Number(process.env.PORT || 3055),
   fetch(req: Request, srv: Server) {
     const url = new URL(req.url);
