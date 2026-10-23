@@ -133,6 +133,23 @@
   .svc-link { color: var(--accent); text-decoration: none; }
   .svc-link:hover { text-decoration: underline; }
   .sec-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); }
+
+  /* 标签页：状态那一栏加载中继自己的数据，记录那一栏要问总控台，两边互不打扰。
+     状态类一律带 is- 前缀——页面里出现过类名与数据值撞车把布局搞崩的情况 */
+  .tabs { display: flex; gap: var(--s-2); border-bottom: var(--bd-hairline); margin-bottom: var(--s-5); }
+  .tab {
+    appearance: none; border: 0; background: transparent; color: var(--text-3);
+    font-family: var(--font-ui); font-size: var(--t-md); line-height: var(--lh-md);
+    padding: var(--s-2) var(--s-4); cursor: pointer; border-radius: var(--r-sm) var(--r-sm) 0 0;
+  }
+  .tab:hover { color: var(--text-1); background: var(--bg-hover); }
+  .tab.is-on {
+    color: var(--accent-text); background: var(--bg-surface);
+    box-shadow: inset 0 calc(var(--bd-w-2) * -1) 0 var(--accent);
+  }
+  .view { display: none; }
+  .view.is-on { display: block; }
+  .proto-empty { font-size: var(--t-sm); color: var(--text-3); }
 </style>
 </head>
 <body>
@@ -141,13 +158,20 @@
   <div class="top">
     <div>
       <div class="title">Figma 通道控制台</div>
-      <div class="subtitle">中继进程自带，不额外占端口。数据来自 <span class="mono">/status</span> 与 <span class="mono">/logs</span>，每 1.5 秒刷新一次。</div>
+      <div class="subtitle">中继进程自带，不额外占端口。通道那一栏读 <span class="mono">/status</span> 与 <span class="mono">/logs</span>，记录那一栏读 <span class="mono">/proto-sites</span>（中继转问总控台），每 1.5 秒刷新一次。</div>
     </div>
     <div class="top-actions">
       <span class="pill idle" id="relay-pill"><i class="dot"></i><span id="relay-text">连接中</span></span>
       <button class="btn" id="btn-pause">暂停刷新</button>
     </div>
   </div>
+
+  <div class="tabs">
+    <button class="tab is-on" id="tab-channel" type="button">通道</button>
+    <button class="tab" id="tab-records" type="button">记录</button>
+  </div>
+
+  <div class="view is-on" id="view-channel">
 
   <div class="grid">
     <div class="card">
@@ -165,7 +189,7 @@
         <span class="k">最后活动</span><span class="v" id="plugin-seen">-</span>
         <span class="k">构建号</span><span class="v mono" id="plugin-build">-</span>
       </div>
-      <div class="hint">插件不自动重连：中继重启后，要在 Figma 里把插件关掉重开一次。构建号要和前置流程页期望值一致才允许推图。</div>
+      <div class="hint">中继重启后插件会自己重连（断开后每 2 秒试一次，实测 2026-10-23 重启后 18 秒内已在线），不用重开；构建号要和前置流程页期望值一致才允许推图。</div>
     </div>
     <div class="card">
       <h2>推送任务</h2>
@@ -220,11 +244,24 @@
     <div class="log" id="log"></div>
   </div>
 
+  </div>
+
+  <div class="view" id="view-records">
+    <div class="card">
+      <div class="sec-head">
+        <h2>原型站记录</h2>
+        <span class="hint" id="proto-note">列表由中继向总控台问一次，页面本身还是总控台直出</span>
+      </div>
+      <div id="proto-list"><div class="proto-empty">还没问</div></div>
+      <div class="hint">这里只列项目单上登记的页。地址打不开通常是总控台停了，或者那一页还没抽过。</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 (function () {
-  var paused = false, lastLog = 0, ticks = 0;
+  var paused = false, lastLog = 0, ticks = 0, shown = "channel";
   var WRAP_KEY = "console-log-wrap";
   var wrapOn = true;
   try { wrapOn = localStorage.getItem(WRAP_KEY) !== "0"; } catch (e) {}
@@ -372,7 +409,71 @@
       el("relay-text").textContent = "通道读不到";
     }
     if (ticks % 4 === 0) { probeService(8768, el("svc-8768")); probeService(8767, el("svc-8767")); probeService(8790, el("svc-8790")); }
+    if (shown === "records") loadProto(false);
   }
+
+  /* ---------- 记录：原型站清单 ---------- */
+
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[<&]/g, function (c) { return c === "<" ? "&lt;" : "&amp;"; });
+  }
+
+  function renderProto(d) {
+    var box = el("proto-list"), note = el("proto-note");
+    if (!d || !d.ok) {
+      note.textContent = "问不到总控台";
+      box.innerHTML = "<div class='proto-empty'>总控台没在跑，问不到项目单：" + esc((d && d.error) || "接口没回应") + "</div>";
+      return;
+    }
+    var sites = d.sites || [];
+    var base = "http://127.0.0.1:" + (d.hubPort || 8790) + "/proto/";
+    if (!sites.length) {
+      note.textContent = "总控台在线，还没有项目单";
+      box.innerHTML = "<div class='proto-empty'>一张项目单都没有，先到前置流程页建一张。</div>";
+      return;
+    }
+    note.textContent = "总控台在线，共 " + sites.length + " 个项目";
+    box.innerHTML = sites.map(function (s) {
+      var pages = s.pages || [];
+      var head = "<div class='grp'>" + esc(s.name) + " <span class='mono'>" + esc(s.id) + "</span> · " +
+        (s.broken ? "项目单读不动" : pages.length + " 页") +
+        (s.updatedAt ? " · 更新于 " + esc(String(s.updatedAt).replace("T", " ").slice(0, 16)) : "") + "</div>";
+      if (!pages.length) return head;
+      var rows = pages.map(function (p) {
+        var href = base + encodeURIComponent(s.id) + "/" + encodeURIComponent(p) + ".html";
+        return "<tr><td class='mono'>" + esc(p) + "</td><td><a class='svc-link' href=\"" + href +
+               "\" target=\"_blank\">" + esc(href) + "</a></td></tr>";
+      }).join("");
+      return head + "<table><tbody>" + rows + "</tbody></table>";
+    }).join("");
+  }
+
+  var protoAt = 0;
+  async function loadProto(force) {
+    // 清单变得慢，跟着 1.5 秒的节拍反复问没意义：切过来时强制问一次，之后每半分钟一次
+    if (!force && Date.now() - protoAt < 30000) return;
+    protoAt = Date.now();
+    try {
+      renderProto(await (await fetch("/proto-sites", { cache: "no-store" })).json());
+    } catch (e) {
+      el("proto-note").textContent = "中继没答上";
+      el("proto-list").innerHTML = "<div class='proto-empty'>中继没答上：" + esc(e) + "</div>";
+    }
+  }
+
+  function showTab(which) {
+    shown = which;
+    el("tab-channel").className = "tab" + (which === "channel" ? " is-on" : "");
+    el("tab-records").className = "tab" + (which === "records" ? " is-on" : "");
+    el("view-channel").className = "view" + (which === "channel" ? " is-on" : "");
+    el("view-records").className = "view" + (which === "records" ? " is-on" : "");
+    // 地址栏带个 #records，刷新和转发链接都停在同一栏
+    try { history.replaceState(null, "", which === "records" ? "#records" : "#"); } catch (e) {}
+    if (which === "records") loadProto(true);
+  }
+  el("tab-channel").addEventListener("click", function () { showTab("channel"); });
+  el("tab-records").addEventListener("click", function () { showTab("records"); });
+  if (location.hash === "#records") showTab("records");
 
   setInterval(tick, 1500);
   tick();

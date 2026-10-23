@@ -216,6 +216,43 @@
     return { x: round(x), y: round(y), positioned: cs.position === "absolute" || cs.position === "fixed" };
   }
 
+  // 只画两条相邻边框、再转 45 度的伪元素，就是下拉箭头与勾选点这类折角符号。
+  // 画成矩形会变成四条边的方框，所以按折线出一张矢量。
+  function chevronOf(cs, w, h) {
+    const r = parsePx(cs.borderRightWidth), l = parsePx(cs.borderLeftWidth);
+    const t = parsePx(cs.borderTopWidth), b = parsePx(cs.borderBottomWidth);
+    const cases = [
+      { on: r > 0 && b > 0 && t === 0 && l === 0, color: cs.borderRightColor, thick: Math.max(r, b), path: `M ${w} 0 L ${w} ${h} L 0 ${h}` },
+      { on: l > 0 && b > 0 && t === 0 && r === 0, color: cs.borderLeftColor, thick: Math.max(l, b), path: `M 0 0 L 0 ${h} L ${w} ${h}` },
+      { on: t > 0 && r > 0 && b === 0 && l === 0, color: cs.borderTopColor, thick: Math.max(t, r), path: `M 0 ${h} L 0 0 L ${w} 0` },
+      { on: t > 0 && l > 0 && b === 0 && r === 0, color: cs.borderTopColor, thick: Math.max(t, l), path: `M 0 0 L ${w} 0 L ${w} ${h}` },
+    ];
+    return cases.find((c) => c.on) || null;
+  }
+
+  function rotateDegOf(transform) {
+    const m = /matrix\(([^)]+)\)/.exec(String(transform || ""));
+    if (!m) return 0;
+    const parts = m[1].split(",").map((s) => Number(s.trim()));
+    if (parts.some(Number.isNaN)) return 0;
+    return Math.round((Math.atan2(parts[1], parts[0]) * 180) / Math.PI);
+  }
+
+  const CHEVRON_PAD = 3;
+
+  function chevronSvg(cw, w, h, deg, opacity) {
+    // 转完之后折角会探出原来的 6x6 盒子，四周各留 3px 画布，节点位置同步往回挪
+    const W = round(w + CHEVRON_PAD * 2), H = round(h + CHEVRON_PAD * 2);
+    const col = toColor(cw.color) || { r: 0, g: 0, b: 0, a: 1 };
+    const hex = "#" + [col.r, col.g, col.b]
+      .map((v) => ("0" + Math.round(v * 255).toString(16)).slice(-2)).join("");
+    const rot = deg ? ` transform="rotate(${deg} ${round(w / 2)} ${round(h / 2)})"` : "";
+    const alpha = round4((col.a === undefined ? 1 : col.a) * (opacity === undefined ? 1 : opacity));
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">` +
+      `<g transform="translate(${CHEVRON_PAD} ${CHEVRON_PAD})"><path d="${cw.path}" fill="none" ` +
+      `stroke="${hex}" stroke-opacity="${alpha}" stroke-width="${round(cw.thick)}"${rot}/></g></svg>`;
+  }
+
   function pseudoNode(el, pseudo, parentRect, opacity) {
     const cs = getComputedStyle(el, pseudo);
     const content = cs.content;
@@ -240,8 +277,21 @@
     }
 
     const bg = toColor(cs.backgroundColor);
-    const grad = gradientPaintOf(cs.backgroundImage, el);
+    const grad = gradientPaintOf(cs.backgroundImage, el, { width: w, height: h });
     if (!w || !h) return null;
+    const cw = chevronOf(cs, w, h);
+    if (cw) {
+      const at = pseudoOffset(el, cs, parentRect, w, h);
+      pseudos++;
+      return {
+        type: "svg",
+        name: describe(el) + pseudo,
+        x: round(at.x - CHEVRON_PAD), y: round(at.y - CHEVRON_PAD),
+        width: round(w + CHEVRON_PAD * 2), height: round(h + CHEVRON_PAD * 2),
+        svg: chevronSvg(cw, w, h, rotateDegOf(cs.transform), opacity),
+        positionAbsolute: at.positioned,
+      };
+    }
     if ((!bg || bg.a === 0) && !grad) return null;
 
     const at = pseudoOffset(el, cs, parentRect, w, h);
@@ -394,17 +444,39 @@
     return out;
   }
 
-  function parseStops(args) {
+  // 色标能写成「颜色 位置」，也能写成「颜色 起点 终点」——后者的颜色在这段距离内
+  // 保持不变（单选圆点就靠这个写法画出实心白心 + 外圈淡出）。位置除了百分比还能是
+  // 像素，而 Figma 只吃 0~1 的比例，所以要把末尾这些数值先剥出来单独换算。
+  function splitStopArg(arg) {
+    const positions = [];
+    let text = String(arg).trim();
+    while (positions.length < 2) {
+      const m = text.match(/\s(-?[\d.]+)(%|px|em|rem)$/);
+      if (!m) break;
+      positions.unshift({ value: parseFloat(m[1]), unit: m[2] });
+      text = text.slice(0, m.index);
+    }
+    return { colorText: text.trim(), positions };
+  }
+
+  // 换算不动就当作没写位置，交给后面均匀铺开。宁可位置不准，也不能因为单位不认识
+  // 把整个色标丢掉——丢掉后色标不足两个，整条渐变就没法还原了。
+  function stopFraction(pos, extent) {
+    const v = pos.unit === "%" ? pos.value / 100 : extent > 0 ? pos.value / extent : null;
+    if (v === null || Number.isNaN(v)) return null;
+    return round4(Math.min(1, Math.max(0, v)));
+  }
+
+  function parseStops(args, extent) {
     const stops = [];
     for (const arg of args) {
-      const pos = arg.match(/\s(-?[\d.]+)%$/);
-      const colorText = pos ? arg.slice(0, pos.index) : arg;
-      const color = toColor(colorText.trim());
+      const part = splitStopArg(arg);
+      const color = toColor(part.colorText);
       if (!color) continue;
-      stops.push({
-        color,
-        position: pos ? round4(parseFloat(pos[1]) / 100) : undefined,
-      });
+      const at = part.positions.map((p) => stopFraction(p, extent)).filter((v) => v !== null);
+      if (!at.length) { stops.push({ color, position: undefined }); continue; }
+      stops.push({ color, position: at[0] });
+      if (at.length > 1 && at[1] !== at[0]) stops.push({ color, position: at[1] });
     }
     if (stops.length < 2) return null;
     stops.forEach((s, i) => {
@@ -428,23 +500,26 @@
   }
 
   // 只描述渐变，矩阵交给插件端用 Figma 自己的 SVG 导入器换算，避免手推符号出错
-  function linearGradientPaint(body) {
+  // box 只为换算像素色标而传：轴长公式必须和插件端 code.js 里那条渐变线算法一致，
+  // 两边算出同一个长度，像素位置换算成的比例才对得上。
+  function linearGradientPaint(body, box) {
     const args = splitTopLevel(body);
     const angle = cssAngleOf(args[0]);
-    const stops = parseStops(angle === null ? args : args.slice(1));
+    const deg = angle === null ? 180 : angle;
+    const rad = (deg * Math.PI) / 180;
+    const extent = box ? Math.abs(box.width * Math.sin(rad)) + Math.abs(box.height * Math.cos(rad)) : 0;
+    const stops = parseStops(angle === null ? args : args.slice(1), extent);
     if (!stops) return null;
-    return { grad: { kind: "linear", angle: angle === null ? 180 : angle, stops } };
+    return { grad: { kind: "linear", angle: deg, stops } };
   }
 
   // 色标判断沿用 parseStops 的口径：Chrome 会把渐变里的颜色算成 rgb()/rgba()，
-  // 所以能转成颜色的参数就是色标，转不动的就是渐变头部（circle / 半径 / at 位置）。
+  // 所以剥掉位置后能转成颜色的参数就是色标，转不动的就是渐变头部（circle / 半径 / at 位置）。
   function looksLikeStop(arg) {
-    const pos = arg.match(/\s(-?[\d.]+(px|%|em|rem|deg)?)$/);
-    const colorText = (pos ? arg.slice(0, pos.index) : arg).trim();
-    return !!toColor(colorText);
+    return !!toColor(splitStopArg(arg).colorText);
   }
 
-  function radialGradientPaint(body) {
+  function radialGradientPaint(body, box) {
     const args = splitTopLevel(body);
     let cut = args.findIndex(looksLikeStop);
     if (cut < 0) cut = args.length;
@@ -465,7 +540,15 @@
       ry = round4(parseFloat(size[3]) / 100);
     }
 
-    const stops = parseStops(args.slice(cut));
+    // 像素色标要按半径换算：插件端对 circle 取的是圆心到最远角，这里用同一条半径，
+    // 椭圆长短轴各算各的，只能按这条半径近似
+    let extent = 0;
+    if (box) {
+      const farX = Math.max(cx * box.width, box.width - cx * box.width);
+      const farY = Math.max(cy * box.height, box.height - cy * box.height);
+      extent = Math.sqrt(farX * farX + farY * farY);
+    }
+    const stops = parseStops(args.slice(cut), extent);
     if (!stops) return null;
     const grad = { kind: "radial", cx, cy, shape, stops };
     if (rx !== undefined && ry !== undefined) {
@@ -591,12 +674,12 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${round(w)}" height="${round(h)}" viewBox="0 0 ${round(w)} ${round(h)}">${paths.join("")}</svg>`;
   }
 
-  function gradientPaintOf(bgImage, el) {
+  function gradientPaintOf(bgImage, el, box) {
     if (!bgImage || bgImage === "none") return null;
     for (const g of gradientLayers(bgImage)) {
       let paint = null;
-      if (g.kind === "linear-gradient") paint = linearGradientPaint(g.body);
-      else if (g.kind === "radial-gradient") paint = radialGradientPaint(g.body);
+      if (g.kind === "linear-gradient") paint = linearGradientPaint(g.body, box);
+      else if (g.kind === "radial-gradient") paint = radialGradientPaint(g.body, box);
       if (paint) return paint;
       if (/^(repeating|conic)/.test(g.kind)) {
         warnings.push(`${g.kind} 在 Figma 没有对应写法，已改用下一层渐变: ${describe(el)}`);
@@ -610,11 +693,13 @@
   function fillsOf(el, cs, rect, opacity) {
     const bg = toColor(cs.backgroundColor);
     const out = [];
-    const grad = gradientPaintOf(cs.backgroundImage, el);
+    const grad = gradientPaintOf(cs.backgroundImage, el, rect);
     if (grad) {
       grad.grad.stops = grad.grad.stops.map((s) => ({ ...s, color: withOpacity(s.color, opacity) }));
-      out.push(grad);
+      // Figma 的 fills 数组是后面的盖在上面，而 CSS 的 background-image 画在 background-color 之上，
+      // 所以底色要先入栈（实测单选圆点就是被后入栈的底色整块盖住的）
       if (bg && bg.a > 0) out.push({ color: withOpacity(bg, opacity) });
+      out.push(grad);
       return out;
     }
     if (cs.backgroundImage && cs.backgroundImage !== "none") {
@@ -661,6 +746,13 @@ function measureTextWidth(text, cs) {
 
   // 有值取值（密码转圆点），没值取 placeholder，下拉取当前选中项。
   // placeholder 的灰色写在 ::placeholder 伪元素上，要单独读计算样式。
+  // 只有文本类输入的 value 才是"画在框里的字"。勾选框与单选框的 value 是 HTML 默认值
+  // "on"、颜色选择器是 "#000000"、滑块是数字，照单全收就会把这些字符印在控件上。
+  const TEXTUAL_TYPES = [
+    "text", "search", "url", "tel", "email", "password", "number",
+    "date", "datetime-local", "time", "month", "week",
+  ];
+
   function controlOf(el, cs, rect, box, opacity, margin, parentAuto) {
     const bl = parsePx(cs.borderLeftWidth), bt = parsePx(cs.borderTopWidth);
     const br = parsePx(cs.borderRightWidth), bb = parsePx(cs.borderBottomWidth);
@@ -674,7 +766,7 @@ function measureTextWidth(text, cs) {
     let text = "";
     let style = cs;
     const tag = el.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") {
+    if (tag === "TEXTAREA" || (tag === "INPUT" && TEXTUAL_TYPES.indexOf(el.type) >= 0)) {
       const v = el.value || "";
       if (v) text = el.type === "password" ? "•".repeat(Math.min(v.length, 24)) : v;
       else if (el.placeholder) {
@@ -725,9 +817,28 @@ function measureTextWidth(text, cs) {
     }
     const accent = toColor(cs.accentColor) || toColor(cs.color) || { r: 0.17, g: 0.55, b: 1, a: 1 };
     const size = Math.min(rect.width, rect.height);
-    const fills = isBox
-      ? (el.checked ? [{ color: withOpacity(accent, opacity) }] : [{ color: withOpacity(toColor(cs.backgroundColor), opacity) || { r: 1, g: 1, b: 1, a: 1 } }])
-      : fillsOf(el, cs, rect, opacity);
+    // 勾选框与单选框是按选中状态着色的方块（走 accentColor），
+    // 输入框、下拉这些走常规填充与描边。这个判断以前只写了使用处没写定义，
+    // 页面一有表单控件就抛 isBox is not defined——夹具两页恰好没有，所以没暴露。
+    const isBox = tag === "INPUT" && (el.type === "checkbox" || el.type === "radio");
+    const boxFills = [];
+    if (isBox) {
+      // 选中态的底色写在 background-color 上（设计系统把控件底色设成了强调色），
+      // 不能优先用 accent-color：那是浏览器原生控件的着色，计算值不是颜色，
+      // 转不动时又会退到文字色，方块就被涂成黑色。
+      const bg = toColor(cs.backgroundColor);
+      const base = bg && bg.a > 0 ? { color: withOpacity(bg, opacity) } : { color: withOpacity(accent, opacity) };
+      const dot = gradientPaintOf(cs.backgroundImage, el, rect);
+      if (el.checked) {
+        boxFills.push(base);
+        if (dot) {
+          boxFills.push({ ...dot, grad: { ...dot.grad, stops: dot.grad.stops.map((s) => ({ ...s, color: withOpacity(s.color, opacity) })) } });
+        }
+      } else {
+        boxFills.push(bg && bg.a > 0 ? base : { color: { r: 1, g: 1, b: 1, a: 1 } });
+      }
+    }
+    const fills = isBox ? boxFills : fillsOf(el, cs, rect, opacity);
 
 
     const own = strokeOf(cs, opacity);
@@ -1165,7 +1276,11 @@ function measureTextWidth(text, cs) {
       stroke: strokeOf(cs, opacity) || undefined,
       cornerRadius: radiusOf(cs),
       effects: [...toEffects(cs.boxShadow), ...blurEffectOf(cs.filter)],
-      clipsContent: cs.overflow === "hidden" || cs.overflow === "clip",
+      // 浏览器只要有一轴设成 hidden/auto/scroll，另一轴写着的 visible 就会被规范化成 auto，
+      // 两个轴都不再让内容溢出——所以"任一轴不是 visible"就整框裁掉，才和浏览器一致。
+      // 原来只认 hidden/clip，把 overflow:auto 的表格容器放过去了：报警详情那张表实测 1825 宽、
+      // 容器只有 1568，多出的 257px 一路画到画板边上，看着就是"表格没显示全"。
+      clipsContent: cs.overflowX !== "visible" || cs.overflowY !== "visible",
       margin,
       // 带 margin 的子元素在自动布局里无法表达，交给插件端改成绝对定位保持视觉位置
       positionAbsolute: !!parentAuto && hasMargin(margin),
@@ -1692,6 +1807,8 @@ function measureTextWidth(text, cs) {
       warnings: warnings.length,
     },
     warnings: [...new Set(warnings)].slice(0, 40),
+    // 落盘目录由外层批量脚本按项目单给；没给就留空，收集服务回落到自己启动时那个目录
+    outDir: window.__FIGMA_OUT_DIR || "",
   };
 
   fetch(ENDPOINT, { method: "POST", body: JSON.stringify(payload) })

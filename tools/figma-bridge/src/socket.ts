@@ -3,6 +3,7 @@
 import { Server, ServerWebSocket } from "bun";
 import { existsSync, readFileSync, statSync } from "fs";
 import { join, resolve } from "path";
+import { protoSitesPayload } from "./relay-proto-sites.ts";
 
 // ---------------------------------------------------------------------------
 // 控制台需要的三份状态：客户端名单、命令流水、日志环形缓冲。
@@ -185,8 +186,8 @@ function note(id: number, patch: Partial<ClientInfo>) {
 }
 
 // 推送脚本落盘的批次状态（build-page / build-batch 写的）。
-// 必须按仓库布局解析到同级的 figma-collect：早先这里写死过一个旧目录名，目录一改就找不到文件，
-// 而下面 readPushState 的写法是"文件不存在就返回 null"，于是控制台的批次块会静默空着、不报任何错。
+// 上一版这里拼的是同级 figma-mcp，阶段 21 那个目录改名成 figma-collect 之后这条路径就不存在了，
+// 而下面 readPushState 的写法是"文件不存在就返回 null"，于是控制台的批次块一直静默空着不报错。
 const PUSH_STATE =
   process.env.PUSH_STATE || join(import.meta.dir, "..", "..", "figma-collect", "push-state.json");
 
@@ -271,7 +272,8 @@ function handleConnection(ws: ServerWebSocket<any>) {
 }
 
 const server = Bun.serve({
-  // 只绑回环。不写 hostname 时 Bun 默认监听所有网卡，同网段任意机器都能连上这条通道给画布下命令。
+  // 只绑回环。不写 hostname 时 Bun 默认监听所有网卡，同网段任何人都能连上这条通道给画布下命令，
+  // 而入口自己一直只监听 127.0.0.1，2026-10-19 把这两处标准对齐。
   hostname: "127.0.0.1",
   port: Number(process.env.PORT || 3055),
   fetch(req: Request, srv: Server) {
@@ -297,6 +299,9 @@ const server = Bun.serve({
       const after = Number(url.searchParams.get("after") || 0);
       return json({ last: logs.length ? logs[logs.length - 1].seq : after, rows: logs.filter((l) => l.seq > after).slice(-200) });
     }
+    // 记录标签页的项目单：处理器不改成 async，这里回一个 Promise 给 Bun 就行——
+    // 为这一个路由把整个 fetch 头改掉，公开那份同步不过去，漂移体检就会把无关的整页都报出来
+    if (url.pathname === "/proto-sites") return protoSitesPayload().then(json);
     if (url.pathname === "/" || url.pathname === "/console") {
       try {
         return new Response(readFileSync(CONSOLE_HTML, "utf8"), {

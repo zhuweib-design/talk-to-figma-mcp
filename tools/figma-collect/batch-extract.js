@@ -22,8 +22,11 @@
 
   async function onePage(code, name, opts) {
     const f = makeFrame(opts.width, opts.height);
-    // 有的项目页面不在站点根目录（例如 pages/xxx.html），用 dir 传子目录
-    f.src = `/${opts.dir ? opts.dir.replace(/^\/|\/$/g, "") + "/" : ""}${name}.html`;
+    // 有的项目页面不在站点根目录（例如 pages/xxx.html），用 dir 传子目录。
+    // 先把斜杠剥干净再拼：dir 给 "/" 时若多留一个斜杠就成了 //index.html，
+    // 浏览器按协议相对地址解析成 http://index.html，直接跨源失败（实测撞过）。
+    const sub = String(opts.dir || "").replace(/^\/+|\/+$/g, "");
+    f.src = `/${sub ? sub + "/" : ""}${name}.html`;
     document.body.appendChild(f);
 
     const loaded = await new Promise((res) => {
@@ -58,6 +61,9 @@
         .catch(() => ({}));
     }
     w.__FIGMA_ENDPOINT = COLLECT;
+    // 落盘目录跟着项目单走（opts.outDir），与 opts.dir 是两回事：
+    // dir 是「这个页面在站点里的子目录」，outDir 是「结果写到收集服务的哪个目录」。
+    w.__FIGMA_OUT_DIR = opts.outDir || "";
     w.__FIGMA_DONE = false;
     w.__FIGMA_ERROR = null;
 
